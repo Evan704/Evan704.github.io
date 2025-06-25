@@ -1,0 +1,6 @@
+User-agent: *
+Disallow:
+
+# 重要：这里的 URL 是根据您之前的配置写死的
+# 如果您的域名变更，需要手动更新这里
+Sitemap: https://evan704.github.io/sitemap.xml
