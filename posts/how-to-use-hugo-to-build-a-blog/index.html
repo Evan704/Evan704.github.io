@@ -6,54 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="noindex, nofollow">
 <title>如何利用Hugo搭建一个自己的博客 | Evan&#39;s blog</title>
-<meta name="keywords" content="">
-<meta name="description" content="如何搭建一个属于自己的博客？一个简单而便捷的博客搭建方案是Hugo&#43;Github Pages，它具有许多优势：
-
-完全免费：不需要购买服务器。
-速度极快：Hugo是目前生成网站最快的工具之一。
-高度可控：允许你定制自己博客的内容。
-
-准备工作：下载Scoop与Hugo
-首先，允许Powershell执行远程脚本。打开Powershell，执行以下命令：
-
-
-
-
-
-
-
-
-
-
-  
-  
-    
-    
-    
-      powershell
-    
-
-    
-    
-      Copy
-    
-
-  
-
-  
-  
-    
-
-1
-
-
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-
-  
-
-Powershell会询问是否确认，输入y回车确认即可。
-Hint: -Scope CurrentUser保证了这个设置只对当前用户有效，是安全的做法。">
+<meta name="keywords" content="Hugo">
+<meta name="description" content="有手就行！">
 <meta name="author" content="">
 <link rel="canonical" href="http://localhost:1313/posts/how-to-use-hugo-to-build-a-blog/">
 <meta name="google-site-verification" content="einQoik8Jc69jO4Z7q6ltdiWgaJkeVfOOjYYzNlWg7E">
@@ -197,8 +151,51 @@ Hint: -Scope CurrentUser保证了这个设置只对当前用户有效，是安�
 
         <div class="inner"><ul>
                 <li>
-                    <a href="#%e5%87%86%e5%a4%87%e5%b7%a5%e4%bd%9c%e4%b8%8b%e8%bd%bdscoop%e4%b8%8ehugo" aria-label="准备工作：下载Scoop与Hugo">准备工作：下载Scoop与Hugo</a>
+                    <a href="#%e5%87%86%e5%a4%87%e5%b7%a5%e4%bd%9c%e4%b8%8b%e8%bd%bdscoop%e4%b8%8ehugo" aria-label="准备工作：下载Scoop与Hugo">准备工作：下载Scoop与Hugo</a></li>
+                <li>
+                    <a href="#%e6%9c%ac%e5%9c%b0%e6%90%ad%e5%bb%ba%e4%bd%a0%e7%9a%84%e5%8d%9a%e5%ae%a2" aria-label="本地搭建你的博客">本地搭建你的博客</a><ul>
+                        
+                <li>
+                    <a href="#1-%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e5%8d%9a%e5%ae%a2%e9%a1%b9%e7%9b%ae" aria-label="1. 创建一个博客项目">1. 创建一个博客项目</a></li>
+                <li>
+                    <a href="#2-%e5%ae%89%e8%a3%85%e4%b8%80%e4%b8%aa%e4%b8%bb%e9%a2%98" aria-label="2. 安装一个主题">2. 安装一个主题</a></li>
+                <li>
+                    <a href="#3-%e9%85%8d%e7%bd%ae%e4%bd%a0%e7%9a%84%e5%8d%9a%e5%ae%a2" aria-label="3. 配置你的博客">3. 配置你的博客</a></li></ul>
                 </li>
+                <li>
+                    <a href="#%e5%bc%80%e5%a7%8b%e5%86%99%e7%ac%ac%e4%b8%80%e7%af%87%e6%96%87%e7%ab%a0" aria-label="开始写第一篇文章！">开始写第一篇文章！</a></li>
+                <li>
+                    <a href="#%e5%b0%86%e5%8d%9a%e5%ae%a2%e9%83%a8%e7%bd%b2%e5%88%b0%e7%bd%91%e7%bb%9c" aria-label="将博客部署到网络">将博客部署到网络</a><ul>
+                        
+                <li>
+                    <a href="#1-%e5%9c%a8-github-%e6%96%b0%e5%bb%ba%e4%b8%a4%e4%b8%aa%e4%bb%93%e5%ba%93" aria-label="1. 在 Github 新建两个仓库">1. 在 Github 新建两个仓库</a></li>
+                <li>
+                    <a href="#2-%e6%8e%a8%e9%80%81%e6%ba%90%e7%a0%81%e5%88%b0-github" aria-label="2. 推送源码到 Github">2. 推送源码到 Github</a></li>
+                <li>
+                    <a href="#3-%e7%94%9f%e6%88%90%e5%b9%b6%e9%83%a8%e7%bd%b2%e7%bd%91%e7%ab%99" aria-label="3. 生成并部署网站">3. 生成并部署网站</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e4%bc%98%e5%8c%96%e5%8f%91%e5%b8%83%e6%b5%81%e7%a8%8b" aria-label="优化发布流程">优化发布流程</a><ul>
+                        
+                <li>
+                    <a href="#1-%e8%ae%be%e7%bd%ae-workflow" aria-label="1. 设置 workflow">1. 设置 workflow</a></li>
+                <li>
+                    <a href="#2-%e7%94%9f%e6%88%90-ssh-%e5%af%86%e9%92%a5" aria-label="2. 生成 SSH 密钥">2. 生成 SSH 密钥</a></li>
+                <li>
+                    <a href="#3-%e9%85%8d%e7%bd%ae%e5%85%ac%e9%92%a5" aria-label="3. 配置公钥">3. 配置公钥</a></li>
+                <li>
+                    <a href="#4-%e9%85%8d%e7%bd%ae%e7%a7%81%e9%92%a5" aria-label="4. 配置私钥">4. 配置私钥</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e5%b8%b8%e8%a7%81%e9%97%ae%e9%a2%98" aria-label="常见问题">常见问题</a><ul>
+                        
+                <li>
+                    <a href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%85%ac%e5%bc%8f%e5%9d%97%e4%b8%8d%e6%b8%b2%e6%9f%93" aria-label="为什么公式块不渲染？">为什么公式块不渲染？</a></li>
+                <li>
+                    <a href="#%e6%80%8e%e4%b9%88%e5%ae%9e%e7%8e%b0-tags-%e5%8a%9f%e8%83%bd" aria-label="怎么实现 tags 功能">怎么实现 tags 功能</a>
+                </li>
+            </ul>
+            </li>
             </ul>
         </div>
     </details>
@@ -207,11 +204,11 @@ Hint: -Scope CurrentUser保证了这个设置只对当前用户有效，是安�
   <div class="post-content"><p>如何搭建一个属于自己的博客？一个简单而便捷的博客搭建方案是<strong>Hugo+Github Pages</strong>，它具有许多优势：</p>
 <ul>
 <li><strong>完全免费</strong>：不需要购买服务器。</li>
-<li><strong>速度极快</strong>：Hugo是目前生成网站最快的工具之一。</li>
+<li><strong>速度极快</strong>：Hugo 是目前生成网站最快的工具之一。</li>
 <li><strong>高度可控</strong>：允许你定制自己博客的内容。</li>
 </ul>
 <h2 id="准备工作下载scoop与hugo">准备工作：下载Scoop与Hugo<a hidden class="anchor" aria-hidden="true" href="#准备工作下载scoop与hugo">#</a></h2>
-<p>首先，允许Powershell执行远程脚本。打开Powershell，执行以下命令：</p>
+<p>首先，允许 Powershell 执行远程脚本。打开 Powershell ，执行以下命令：</p>
 
 
 
@@ -251,20 +248,926 @@ Hint: -Scope CurrentUser保证了这个设置只对当前用户有效，是安�
 </div>
   </div>
 
-</div><p>Powershell会询问是否确认，输入y回车确认即可。</p>
-<p><strong>Hint</strong>: -Scope CurrentUser保证了这个设置只对当前用户有效，是安全的做法。</p>
+</div><p>Powershell 会询问是否确认，输入 y 回车确认即可。</p>
+<p><strong>Hint</strong>: <code>-Scope CurrentUser</code>保证了这个设置只对当前用户有效，是安全的做法。</p>
+<p>接下来就可以安装 Scoop ，在 Powershell 中执行：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-21c37f3e1362">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nb">irm </span><span class="n">get</span><span class="p">.</span><span class="py">scoop</span><span class="p">.</span><span class="py">sh</span> <span class="p">|</span> <span class="n">iex</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>如果无法下载，可以直接在浏览器中打开get.scoop.sh，另存为<code>.ps1</code>文件并运行。
+安装脚本运行完毕后，可以输入以下命令来验证安装是否成功：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-9021c1731a6e">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">scoop</span> <span class="n">help</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>现在，你就可以直接使用<code>scoop</code>命令来安装软件了！</p>
+<p>在以下教程中，默认你已经安装了 VS Code 和 Git 。</p>
+<p>首先我们可以安装增强版下载工具 aria2 (可选但推荐，Scoop会自动调用它进行多线程下载)：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-3edcbb7a6baa">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">scoop</span> <span class="n">install</span> <span class="n">aria2</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>然后需要下载Hugo：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-49ef1f064ec3">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">scoop</span> <span class="n">install</span> <span class="nb">hugo-extended</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>至此，准备工作完成。</p>
+<h2 id="本地搭建你的博客">本地搭建你的博客<a hidden class="anchor" aria-hidden="true" href="#本地搭建你的博客">#</a></h2>
+<h3 id="1-创建一个博客项目">1. 创建一个博客项目<a hidden class="anchor" aria-hidden="true" href="#1-创建一个博客项目">#</a></h3>
+<p>进入你希望存放博客的目录（以<code>E:\MyBlog</code>为例），运行以下命令：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-393bcc012696">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">hugo</span> <span class="n">new</span> <span class="n">site</span> <span class="n">MyBlog</span>
+</span></span><span class="line"><span class="cl"><span class="nb">cd </span><span class="n">MyBlog</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>将来，你的博客的文件将会存储在<code>E:\MyBlog</code>下。</p>
+<h3 id="2-安装一个主题">2. 安装一个主题<a hidden class="anchor" aria-hidden="true" href="#2-安装一个主题">#</a></h3>
+<p>以一个流行的简洁而功能强大的主题 <strong>PaperMod</strong> 为例（即本博客使用的主题）。
+首先，将博客初始化为 Git 仓库，在<code>E:\MyBlog下</code>执行：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-0e3151390f84">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">git</span> <span class="n">init</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>接着，安装 <strong>PaperMod</strong></p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-3bc32521634a">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">git</span> <span class="n">submodule</span> <span class="n">add</span> <span class="n">https</span><span class="err">:</span><span class="p">//</span><span class="n">github</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">adityatelange</span><span class="p">/</span><span class="nb">hugo-PaperMod</span><span class="p">.</span><span class="py">git</span> <span class="n">themes</span><span class="p">/</span><span class="n">PaperMod</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><h3 id="3-配置你的博客">3. 配置你的博客<a hidden class="anchor" aria-hidden="true" href="#3-配置你的博客">#</a></h3>
+<p>在 VS Code中，打开根目录下的<code>hugo.toml</code>文件。在这里，你可以配置你的博客。
+为了实现基础功能，将该文件修改如下：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-53947bc4c556">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">toml</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="nx">baseURL</span> <span class="p">=</span> <span class="s2">&#34;https://your-github-username.github.io/&#34;</span> <span class="c"># 重要！将你的 github 用户名填入！</span>
+</span></span><span class="line"><span class="cl"><span class="nx">languageCode</span> <span class="p">=</span> <span class="s2">&#34;zh-cn&#34;</span> <span class="c"># 网站语言</span>
+</span></span><span class="line"><span class="cl"><span class="nx">title</span> <span class="p">=</span> <span class="s2">&#34;My Blog&#34;</span> <span class="c"># 网站标题</span>
+</span></span><span class="line"><span class="cl"><span class="nx">theme</span> <span class="p">=</span> <span class="s2">&#34;PaperMod&#34;</span> <span class="c"># 使用的主题</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c"># 将来的配置写在下面</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p><strong>Hint</strong> : 务必修改 baseURL 中的网址！</p>
+<h2 id="开始写第一篇文章">开始写第一篇文章！<a hidden class="anchor" aria-hidden="true" href="#开始写第一篇文章">#</a></h2>
+<p>运行以下命令创建第一篇文章：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-3c584693e541">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">hugo</span> <span class="n">new</span> <span class="n">content</span> <span class="n">posts</span><span class="p">/</span><span class="n">test</span><span class="p">.</span><span class="n">md</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>用该命令创建新文件的好处是新创建的文件会带有默认的 Front Matter：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-c63926d25e6a">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">toml</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="err">+++</span>
+</span></span><span class="line"><span class="cl"><span class="nx">date</span> <span class="p">=</span> <span class="s1">&#39;2025-06-25T09:47:11+08:00&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="nx">draft</span> <span class="p">=</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl"><span class="nx">title</span> <span class="p">=</span> <span class="s1">&#39;Test&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="err">+++</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>Front Matter 中可以设置文章的一些基本信息，如标题，日期，是否为草稿等。</p>
+<p>在 Front Matter 下方，你就可以开始书写你的正文了！写完保存后，你就可以执行以下命令来预览你的第一篇文章！</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-d6929f9b85b4">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">hugo</span> <span class="n">server</span> <span class="n">-D</span> <span class="c"># -D 参数意为显示草稿文章，默认不显示。</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>如果一切正常，终端会提示：
+<code>Web Server is available at http://localhost:1313/</code></p>
+<p>此时，在浏览器中打开<code>http://localhost:1313/</code>即可预览你的博客。</p>
+<p>你在本地对文章进行修改时，预览版网页也会<strong>动态</strong>地显示修改，十分方便。</p>
+<h2 id="将博客部署到网络">将博客部署到网络<a hidden class="anchor" aria-hidden="true" href="#将博客部署到网络">#</a></h2>
+<h3 id="1-在-github-新建两个仓库">1. 在 Github 新建两个仓库<a hidden class="anchor" aria-hidden="true" href="#1-在-github-新建两个仓库">#</a></h3>
+<p>一个用于保存源码（假设仓库名为<code>BlogSource</code>），可以设置为 Private ；另一个用于保存发布的静态网页，<strong>必须设置为 Public</strong> ，且<strong>仓库名必须为</strong><code>&lt;username&gt;.github.io</code>。</p>
+<h3 id="2-推送源码到-github">2. 推送源码到 Github<a hidden class="anchor" aria-hidden="true" href="#2-推送源码到-github">#</a></h3>
+<p>在博客的根目录下执行：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-84e606f883c5">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">git</span> <span class="n">remote</span> <span class="n">add</span> <span class="n">origin</span> <span class="n">git</span><span class="nv">@github</span><span class="p">.</span><span class="n">com</span><span class="err">:</span><span class="p">&lt;</span><span class="n">username</span><span class="p">&gt;/</span><span class="n">BlogSource</span><span class="p">.</span><span class="py">git</span> <span class="c"># 若设置了 SSH</span>
+</span></span><span class="line"><span class="cl"><span class="n">git</span> <span class="n">add</span> <span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="n">git</span> <span class="n">commit</span> <span class="n">-m</span> <span class="s2">&#34;Initialize&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">git</span> <span class="n">push</span> <span class="n">-u</span> <span class="n">origin</span> <span class="n">master</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><h3 id="3-生成并部署网站">3. 生成并部署网站<a hidden class="anchor" aria-hidden="true" href="#3-生成并部署网站">#</a></h3>
+<p>在博客根目录下执行：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-0478721f1106">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="n">hugo</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>这会生成一个 public 文件夹，里面就是最终的网页文件。</p>
+<p>进入 public 文件夹，并初始化为 Git 仓库，然后关联到发布仓库。</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-fc2a47030431">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nb">cd </span><span class="n">public</span>
+</span></span><span class="line"><span class="cl"><span class="n">git</span> <span class="n">init</span>
+</span></span><span class="line"><span class="cl"><span class="n">git</span> <span class="n">remote</span> <span class="n">add</span> <span class="n">origin</span> <span class="n">git</span><span class="nv">@github</span><span class="p">.</span><span class="n">com</span><span class="err">:</span><span class="p">&lt;</span><span class="n">username</span><span class="p">&gt;/&lt;</span><span class="n">username</span><span class="p">&gt;.</span><span class="py">github</span><span class="p">.</span><span class="py">io</span><span class="p">.</span><span class="py">git</span>
+</span></span><span class="line"><span class="cl"><span class="n">git</span> <span class="n">add</span> <span class="p">.</span>
+</span></span><span class="line"><span class="cl"><span class="n">git</span> <span class="n">commit</span> <span class="n">-m</span> <span class="s2">&#34;Build web&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="n">git</span> <span class="n">push</span> <span class="n">-u</span> <span class="n">origin</span> <span class="n">master</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>等待几分钟，就可以访问<code>https://your-github-username.github.io</code>并查看你的博客了！</p>
+<h2 id="优化发布流程">优化发布流程<a hidden class="anchor" aria-hidden="true" href="#优化发布流程">#</a></h2>
+<p>现在每次写完文章都需要手动<code>hugo</code>再<code>cd public</code>再推送，有点麻烦。我们可以利用 <strong>Github Action</strong> 实现<strong>自动化部署</strong>。</p>
+<h3 id="1-设置-workflow">1. 设置 workflow<a hidden class="anchor" aria-hidden="true" href="#1-设置-workflow">#</a></h3>
+<p>首先，在博客根目录下新建<code>.github</code>文件夹，再在其中新建<code>workflow</code>文件夹。接着在里面新建<code>deploy.yml</code>，并用 VS Code 打开，贴入以下内容：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-9cd6e53b038e">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">yaml</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Deploy Hugo site to Pages</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">on</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">push</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">branches</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">master</span><span class="w"> </span><span class="c"># 监视 master 分支</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">jobs</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">build-and-deploy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l">ubuntu-latest</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">steps</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Checkout</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l">actions/checkout@v4</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">with</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">submodules</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">  </span><span class="c"># 拉取主题 submodule</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Setup Hugo</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l">peaceiris/actions-hugo@v3</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">with</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">hugo-version</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;latest&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">extended</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Build</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l">hugo --minify</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">Deploy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l">peaceiris/actions-gh-pages@v4</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">with</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">deploy_key</span><span class="p">:</span><span class="w"> </span><span class="l">${{ secrets.ACTIONS_DEPLOY_KEY }}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">publish_dir</span><span class="p">:</span><span class="w"> </span><span class="l">./public</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="c"># 部署到 &lt;username&gt;.github.io 仓库</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">external_repository</span><span class="p">:</span><span class="w"> </span><span class="l">&lt;username&gt;/&lt;username&gt;.github.io</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">publish_branch</span><span class="p">:</span><span class="w"> </span><span class="l">master</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">user_name</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;github-actions[bot]&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">user_email</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;github-actions[bot]@users.noreply.github.com&#39;</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>接下来我们需要给这个 Github Action 设置 deploy key。</p>
+<h3 id="2-生成-ssh-密钥">2. 生成 SSH 密钥<a hidden class="anchor" aria-hidden="true" href="#2-生成-ssh-密钥">#</a></h3>
+<p>在任意路径下运行以下命令：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-07904bef7836">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">powershell</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-powershell" data-lang="powershell"><span class="line"><span class="cl"><span class="nb">ssh-keygen</span> <span class="n">-t</span> <span class="n">ed25519</span> <span class="n">-C</span> <span class="s2">&#34;hugo deploy key&#34;</span> <span class="o">-f</span> <span class="p">./</span><span class="nb">hugo-deploy</span><span class="n">-key</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>终端会提示<code>Enter passphrase (empty for no passphrase):</code>，此时需直接输入回车。完成后，在当前路径下会得到两个新文件：</p>
+<ul>
+<li><code>hugo-deploy-key</code>（私钥）</li>
+<li><code>hugo-deploy-key.pub</code>（公钥）</li>
+</ul>
+<h3 id="3-配置公钥">3. 配置公钥<a hidden class="anchor" aria-hidden="true" href="#3-配置公钥">#</a></h3>
+<p>复制公钥中所有内容，打开发布仓库（<code>&lt;username&gt;.github.io</code>仓库），在 Settings 选项卡中选择 Deploy Keys ，点击 Add deploy key 。</p>
+<p>随意输入一个 Title （你看得懂就行），将复制内容贴入 Key 中，勾选 Allow write access ，然后点击 Add key 。</p>
+<h3 id="4-配置私钥">4. 配置私钥<a hidden class="anchor" aria-hidden="true" href="#4-配置私钥">#</a></h3>
+<p>复制私钥中所有内容，打开源码仓库（<code>BlogSource</code>仓库），在 Settings 选项卡中选择 Secrets and variables ，选择 Actions 。点击 New repository secret ，在 Name 中输入 <code>ACTION_DEPLOY_KEY</code>，在 Secret 中粘贴复制内容，点击 Add secret。</p>
+<p>至此，可以重新向源码仓库提交更改，此时 workflow 已经配置完成。</p>
+<p>在未来写新文章时的流程如下：</p>
+<ol>
+<li><code>hugo new content posts/something_new.md</code></li>
+<li>写完后保存，将 Front Matter 中的 draft 属性修改为 false 。</li>
+<li>通过<code>hugo server</code>进行预览。（重要，也可直接使用<code>hugo</code>）</li>
+<li>向源码仓库推送，workflow 会自动完成剩余的工作。</li>
+</ol>
+<h2 id="常见问题">常见问题<a hidden class="anchor" aria-hidden="true" href="#常见问题">#</a></h2>
+<h3 id="为什么公式块不渲染">为什么公式块不渲染？<a hidden class="anchor" aria-hidden="true" href="#为什么公式块不渲染">#</a></h3>
+<p>疑似是主题本身的问题，解决方法很简单，在<code>layouts</code>文件夹下新建<code>partials</code>文件夹，然后在其中新建<code>extend_head.html</code>文件，贴入以下内容：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-c58a79822978">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">html</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-html" data-lang="html"><span class="line"><span class="cl">{{- if .Params.math -}}
+</span></span><span class="line"><span class="cl"><span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&#34;stylesheet&#34;</span> <span class="na">href</span><span class="o">=</span><span class="s">&#34;https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css&#34;</span> <span class="na">integrity</span><span class="o">=</span><span class="s">&#34;sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV&#34;</span> <span class="na">crossorigin</span><span class="o">=</span><span class="s">&#34;anonymous&#34;</span><span class="p">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="p">&lt;</span><span class="nt">script</span> <span class="na">defer</span> <span class="na">src</span><span class="o">=</span><span class="s">&#34;https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js&#34;</span> <span class="na">integrity</span><span class="o">=</span><span class="s">&#34;sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8&#34;</span> <span class="na">crossorigin</span><span class="o">=</span><span class="s">&#34;anonymous&#34;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="p">&lt;</span><span class="nt">script</span> <span class="na">defer</span> <span class="na">src</span><span class="o">=</span><span class="s">&#34;https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js&#34;</span> <span class="na">integrity</span><span class="o">=</span><span class="s">&#34;sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05&#34;</span> <span class="na">crossorigin</span><span class="o">=</span><span class="s">&#34;anonymous&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="na">onload</span><span class="o">=</span><span class="s">&#34;renderMathInElement(document.body, 
+</span></span></span><span class="line"><span class="cl"><span class="s">    {
+</span></span></span><span class="line"><span class="cl"><span class="s">        delimiters: [
+</span></span></span><span class="line"><span class="cl"><span class="s">            {left: &#39;$$&#39;, right: &#39;$$&#39;, display: true},
+</span></span></span><span class="line"><span class="cl"><span class="s">            {left: &#39;$&#39;, right: &#39;$&#39;, display: false}
+</span></span></span><span class="line"><span class="cl"><span class="s">        ]
+</span></span></span><span class="line"><span class="cl"><span class="s">    });&#34;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</span></span><span class="line"><span class="cl">{{- end -}}</span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>这段代码会调用 katex 对公式块进行渲染。</p>
+<h3 id="怎么实现-tags-功能">怎么实现 tags 功能<a hidden class="anchor" aria-hidden="true" href="#怎么实现-tags-功能">#</a></h3>
+<p>非常简单，完全不需要额外的操作，只需在文章的 Front Matter 中添加 tags 属性即可，例如：</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-a9bff9d81c2b">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">toml</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="cl"><span class="err">+++</span>
+</span></span><span class="line"><span class="cl"><span class="c"># 其他属性</span>
+</span></span><span class="line"><span class="cl"><span class="nx">tags</span> <span class="p">=</span> <span class="p">[</span><span class="s2">&#34;Code&#34;</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="err">+++</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>即可为这篇文章创建一个名为 Code 的 tag。点击这个 tag 还能直接查看所有含有这个 tag 的文章。</p>
 
 
   </div>
 
   <footer class="post-footer">
     <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/hugo/">Hugo</a></li>
     </ul>
 <nav class="paginav">
-  <a class="prev" href="http://localhost:1313/posts/test/">
+  <a class="prev" href="http://localhost:1313/posts/markdown-basic-grammar/">
     <span class="title">« Prev</span>
     <br>
-    <span>Test</span>
+    <span>Markdown基本语法</span>
   </a>
 </nav>
 

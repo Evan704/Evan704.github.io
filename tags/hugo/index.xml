@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Hugo on Evan&#39;s blog</title>
+    <link>http://localhost:1313/tags/hugo/</link>
+    <description>Recent content in Hugo on Evan&#39;s blog</description>
+    <generator>Hugo -- 0.147.9</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Tue, 24 Jun 2025 11:03:50 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/hugo/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>如何利用Hugo搭建一个自己的博客</title>
+      <link>http://localhost:1313/posts/how-to-use-hugo-to-build-a-blog/</link>
+      <pubDate>Tue, 24 Jun 2025 11:03:50 +0800</pubDate>
+      <guid>http://localhost:1313/posts/how-to-use-hugo-to-build-a-blog/</guid>
+      <description>&lt;p&gt;如何搭建一个属于自己的博客？一个简单而便捷的博客搭建方案是&lt;strong&gt;Hugo+Github Pages&lt;/strong&gt;，它具有许多优势：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;完全免费&lt;/strong&gt;：不需要购买服务器。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;速度极快&lt;/strong&gt;：Hugo 是目前生成网站最快的工具之一。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;高度可控&lt;/strong&gt;：允许你定制自己博客的内容。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;准备工作下载scoop与hugo&#34;&gt;准备工作：下载Scoop与Hugo&lt;/h2&gt;
+&lt;p&gt;首先，允许 Powershell 执行远程脚本。打开 Powershell ，执行以下命令：&lt;/p&gt;
+
+
+
+
+
+
+
+
+&lt;div class=&#34;custom-code-container highlight&#34; id=&#34;code-block-00ffe6659852&#34;&gt;
+
+  
+  &lt;div class=&#34;custom-code-header&#34;&gt;
+    
+    
+    
+      &lt;div class=&#34;custom-code-lang&#34;&gt;powershell&lt;/div&gt;
+    
+
+    
+    &lt;button class=&#34;custom-code-copy-btn&#34; 
+            aria-label=&#34;复制代码&#34; 
+            data-copied-text=&#34;Copied!&#34;&gt;
+      &lt;span&gt;Copy&lt;/span&gt;
+    &lt;/button&gt;
+
+  &lt;/div&gt;
+
+  
+  &lt;div class=&#34;highlight-code&#34;&gt;
+    &lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-powershell&#34; data-lang=&#34;powershell&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nb&#34;&gt;Set-ExecutionPolicy&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;-ExecutionPolicy&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;RemoteSigned&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;-Scope&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;CurrentUser&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;&lt;p&gt;Powershell 会询问是否确认，输入 y 回车确认即可。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Hint&lt;/strong&gt;: &lt;code&gt;-Scope CurrentUser&lt;/code&gt;保证了这个设置只对当前用户有效，是安全的做法。&lt;/p&gt;
+&lt;p&gt;接下来就可以安装 Scoop ，在 Powershell 中执行：&lt;/p&gt;
+
+
+
+
+
+
+
+
+&lt;div class=&#34;custom-code-container highlight&#34; id=&#34;code-block-21c37f3e1362&#34;&gt;
+
+  
+  &lt;div class=&#34;custom-code-header&#34;&gt;
+    
+    
+    
+      &lt;div class=&#34;custom-code-lang&#34;&gt;powershell&lt;/div&gt;
+    
+
+    
+    &lt;button class=&#34;custom-code-copy-btn&#34; 
+            aria-label=&#34;复制代码&#34; 
+            data-copied-text=&#34;Copied!&#34;&gt;
+      &lt;span&gt;Copy&lt;/span&gt;
+    &lt;/button&gt;
+
+  &lt;/div&gt;
+
+  
+  &lt;div class=&#34;highlight-code&#34;&gt;
+    &lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-powershell&#34; data-lang=&#34;powershell&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nb&#34;&gt;irm &lt;/span&gt;&lt;span class=&#34;n&#34;&gt;get&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;py&#34;&gt;scoop&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;py&#34;&gt;sh&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;|&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;iex&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;&lt;p&gt;如果无法下载，可以直接在浏览器中打开get.scoop.sh，另存为&lt;code&gt;.ps1&lt;/code&gt;文件并运行。
+安装脚本运行完毕后，可以输入以下命令来验证安装是否成功：&lt;/p&gt;
+
+
+
+
+
+
+
+
+&lt;div class=&#34;custom-code-container highlight&#34; id=&#34;code-block-9021c1731a6e&#34;&gt;
+
+  
+  &lt;div class=&#34;custom-code-header&#34;&gt;
+    
+    
+    
+      &lt;div class=&#34;custom-code-lang&#34;&gt;powershell&lt;/div&gt;
+    
+
+    
+    &lt;button class=&#34;custom-code-copy-btn&#34; 
+            aria-label=&#34;复制代码&#34; 
+            data-copied-text=&#34;Copied!&#34;&gt;
+      &lt;span&gt;Copy&lt;/span&gt;
+    &lt;/button&gt;
+
+  &lt;/div&gt;
+
+  
+  &lt;div class=&#34;highlight-code&#34;&gt;
+    &lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-powershell&#34; data-lang=&#34;powershell&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;scoop&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;help&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;&lt;p&gt;现在，你就可以直接使用&lt;code&gt;scoop&lt;/code&gt;命令来安装软件了！&lt;/p&gt;
+&lt;p&gt;在以下教程中，默认你已经安装了 VS Code 和 Git 。&lt;/p&gt;
+&lt;p&gt;首先我们可以安装增强版下载工具 aria2 (可选但推荐，Scoop会自动调用它进行多线程下载)：&lt;/p&gt;
+
+
+
+
+
+
+
+
+&lt;div class=&#34;custom-code-container highlight&#34; id=&#34;code-block-3edcbb7a6baa&#34;&gt;
+
+  
+  &lt;div class=&#34;custom-code-header&#34;&gt;
+    
+    
+    
+      &lt;div class=&#34;custom-code-lang&#34;&gt;powershell&lt;/div&gt;
+    
+
+    
+    &lt;button class=&#34;custom-code-copy-btn&#34; 
+            aria-label=&#34;复制代码&#34; 
+            data-copied-text=&#34;Copied!&#34;&gt;
+      &lt;span&gt;Copy&lt;/span&gt;
+    &lt;/button&gt;
+
+  &lt;/div&gt;
+
+  
+  &lt;div class=&#34;highlight-code&#34;&gt;
+    &lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-powershell&#34; data-lang=&#34;powershell&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;scoop&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;install&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;aria2&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;&lt;p&gt;然后需要下载Hugo：&lt;/p&gt;
+
+
+
+
+
+
+
+
+&lt;div class=&#34;custom-code-container highlight&#34; id=&#34;code-block-49ef1f064ec3&#34;&gt;
+
+  
+  &lt;div class=&#34;custom-code-header&#34;&gt;
+    
+    
+    
+      &lt;div class=&#34;custom-code-lang&#34;&gt;powershell&lt;/div&gt;
+    
+
+    
+    &lt;button class=&#34;custom-code-copy-btn&#34; 
+            aria-label=&#34;复制代码&#34; 
+            data-copied-text=&#34;Copied!&#34;&gt;
+      &lt;span&gt;Copy&lt;/span&gt;
+    &lt;/button&gt;
+
+  &lt;/div&gt;
+
+  
+  &lt;div class=&#34;highlight-code&#34;&gt;
+    &lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-powershell&#34; data-lang=&#34;powershell&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;scoop&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;install&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;hugo-extended&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;&lt;p&gt;至此，准备工作完成。&lt;/p&gt;
+&lt;h2 id=&#34;本地搭建你的博客&#34;&gt;本地搭建你的博客&lt;/h2&gt;
+&lt;h3 id=&#34;1-创建一个博客项目&#34;&gt;1. 创建一个博客项目&lt;/h3&gt;
+&lt;p&gt;进入你希望存放博客的目录（以&lt;code&gt;E:\MyBlog&lt;/code&gt;为例），运行以下命令：&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
