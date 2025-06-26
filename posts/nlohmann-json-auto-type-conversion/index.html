@@ -1,0 +1,470 @@
+<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>[Nlohmann json源码阅读] 自动类型转换&参数依赖查找(ADL) | Evan's blog</title><meta name=keywords content="Nlohmann json,C++,源码阅读,参数依赖查找ADL"><meta name=description content="分析了Nlohmann json库强大的自动类型转换系统的工作原理，介绍了参数依赖查找机制"><meta name=author content><link rel=canonical href=https://evan704.github.io/posts/nlohmann-json-auto-type-conversion/><meta name=google-site-verification content="einQoik8Jc69jO4Z7q6ltdiWgaJkeVfOOjYYzNlWg7E"><link crossorigin=anonymous href=/assets/css/stylesheet.6b440e33cadb6d978cca3c09460d5ab82e38e933f7c06903d0a8988bd598e69b.css integrity="sha256-a0QOM8rbbZeMyjwJRg1auC446TP3wGkD0KiYi9WY5ps=" rel="preload stylesheet" as=style><link rel=icon href=https://evan704.github.io/favicon.ico><link rel=icon type=image/png sizes=16x16 href=https://evan704.github.io/favicon-16x16.png><link rel=icon type=image/png sizes=32x32 href=https://evan704.github.io/favicon-32x32.png><link rel=apple-touch-icon href=https://evan704.github.io/apple-touch-icon.png><link rel=mask-icon href=https://evan704.github.io/safari-pinned-tab.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=https://evan704.github.io/posts/nlohmann-json-auto-type-conversion/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51)}.list{background:var(--theme)}.list:not(.dark)::-webkit-scrollbar-track{background:0 0}.list:not(.dark)::-webkit-scrollbar-thumb{border-color:var(--theme)}}</style></noscript><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css integrity=sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV crossorigin=anonymous><script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js integrity=sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8 crossorigin=anonymous></script><script defer src=https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js integrity=sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05 crossorigin=anonymous onload='renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"$",right:"$",display:!1}]})'></script><link rel=stylesheet href=/css/syntax.css><meta property="og:url" content="https://evan704.github.io/posts/nlohmann-json-auto-type-conversion/"><meta property="og:site_name" content="Evan's blog"><meta property="og:title" content="[Nlohmann json源码阅读] 自动类型转换&参数依赖查找(ADL)"><meta property="og:description" content="分析了Nlohmann json库强大的自动类型转换系统的工作原理，介绍了参数依赖查找机制"><meta property="og:locale" content="zh-cn"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2025-06-25T20:59:13+08:00"><meta property="article:modified_time" content="2025-06-25T20:59:13+08:00"><meta property="article:tag" content="Nlohmann Json"><meta property="article:tag" content="C++"><meta property="article:tag" content="源码阅读"><meta property="article:tag" content="参数依赖查找ADL"><meta name=twitter:card content="summary"><meta name=twitter:title content="[Nlohmann json源码阅读] 自动类型转换&参数依赖查找(ADL)"><meta name=twitter:description content="分析了Nlohmann json库强大的自动类型转换系统的工作原理，介绍了参数依赖查找机制"><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://evan704.github.io/posts/"},{"@type":"ListItem","position":2,"name":"[Nlohmann json源码阅读] 自动类型转换\u0026参数依赖查找(ADL)","item":"https://evan704.github.io/posts/nlohmann-json-auto-type-conversion/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"[Nlohmann json源码阅读] 自动类型转换\u0026参数依赖查找(ADL)","name":"[Nlohmann json源码阅读] 自动类型转换\u0026参数依赖查找(ADL)","description":"分析了Nlohmann json库强大的自动类型转换系统的工作原理，介绍了参数依赖查找机制","keywords":["Nlohmann json","C++","源码阅读","参数依赖查找ADL"],"articleBody":"自动类型转换示例 Nlohmann json库实现了非常强大的自动类型转换功能，举个例子：\nc++ Copy 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 #include #include #include\"json.hpp\" using json = nlohmann::json; int main() { // 无需手动指定类型即可实现C++类型向JSON类的转换 json j_int = 42; json j_float = 3.14; json j_string = \"OOP\"; // 内置对STL容器转换的支持 std::vector\u003cint\u003e vec = {1, 2, 3, 4}; json j_vec = vec; // JSON类向C++类的转换 auto i = j_int.get\u003cint\u003e(); // 42 auto f = j_float.get\u003cfloat\u003e(); // 3.14 auto s = j_string.get\u003cstd::string\u003e(); // OOP auto v = j_vec.get\u003cstd::vector\u003cint\u003e\u003e(); // [1, 2, 3, 4] } 工作原理 这个自动转换系统是如何实现的呢？以从 C++ 类型向 JSON 类型转换为例，它主要涉及四个部分：basic_json的构造函数、adl_serializer的to_json函数、to_json.hpp中的to_json_fn（一个函数对象）、to_json.hpp中多个重载的to_json函数（或用户重载的to_json函数）。\n接下来我们将跟踪定义json j = some_object后的行为。\nbasic_json 的构造函数 定义json j = some_object后，首先会进入basic_json类的构造函数。\nc++ Copy 1 2 3 4 5 6 7 8 9 10 11 12 template \u003c typename CompatibleType, typename U = detail::uncvref_t\u003cCompatibleType\u003e, detail::enable_if_t \u003c !detail::is_basic_json\u003cU\u003e::value \u0026\u0026 detail::is_compatible_type\u003cbasic_json_t, U\u003e::value, int \u003e = 0 \u003e basic_json(CompatibleType \u0026\u0026 val) noexcept(noexcept( JSONSerializer\u003cU\u003e::to_json(std::declval\u003cbasic_json_t\u0026\u003e(), std::forward\u003cCompatibleType\u003e(val)))) { JSONSerializer\u003cU\u003e::to_json(*this, std::forward\u003cCompatibleType\u003e(val)); set_parents(); assert_invariant(); } 对于可兼容类型，这个模板函数会被实例化，从而调用序列化器JSONSerializer（默认为adl_serializer）的to_json函数。\n什么是可兼容类型?简单来讲就是序列化器(特化或未特化的)含有相应类型的to_json函数.这个判断是通过type traits (类型萃取)的方式进行判断的,我们将在另一篇文章中讨论.\nadl_serializer的to_json函数 c++ Copy 1 2 3 4 5 6 7 template\u003ctypename BasicJsonType, typename TargetType = ValueType\u003e static auto to_json(BasicJsonType\u0026 j, TargetType \u0026\u0026 val) noexcept( noexcept(::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)))) -\u003e decltype(::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)), void()) { ::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)); } 以TargetType为模板参数,这个函数调用nlohmann命名空间下的to_json函数对象.\nto_json.hpp中的to_json_fn to_json又是怎么调用到to_json_fn这个函数对象的呢?在to_json.hpp中(nlohmann命名空间下),有这样一段代码:\nc++ Copy 1 2 JSON_INLINE_VARIABLE constexpr const auto\u0026 to_json = detail::static_const\u003cdetail::to_json_fn\u003e::value; 这段代码的作用是将nlohmann命名空间下的to_json定义为一个函数对象to_json_fn(detail命名空间下),后续会解释为什么需要采用间接的方式来调用这个函数对象.\nc++ Copy 1 2 3 4 5 6 7 8 9 struct to_json_fn { template\u003ctypename BasicJsonType, typename T\u003e auto operator()(BasicJsonType\u0026 j, T\u0026\u0026 val) const noexcept(noexcept(to_json(j, std::forward\u003cT\u003e(val)))) -\u003e decltype(to_json(j, std::forward\u003cT\u003e(val)), void()) { return to_json(j, std::forward\u003cT\u003e(val)); } }; 这个函数对象调用的是一个无限定(非常重要!)的to_json函数.\nto_json.hpp中多个重载的to_json函数 c++ Copy 1 2 3 4 5 template\u003ctypename BasicJsonType\u003e inline void to_json(BasicJsonType\u0026 j, typename BasicJsonType::string_t\u0026\u0026 s) { external_constructor\u003cvalue_t::string\u003e::construct(j, std::move(s)); } 此处的external_constructor是一个模板类,用于安全地管理 union 的创建和修改.\n自定义类型的类型转换（1） 为什么调用过程看似如此复杂?这涉及到该库精妙的结构设计.在讨论它之前,先让我们看看怎么使用该库实现自定义类型的类型转换.\nc++ Copy 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 #include #include #include #include #include\"json.hpp\" using json = nlohmann::json; struct Person { std::string name; int age; bool operator== (const Person\u0026 a) { return (name == a.name) \u0026\u0026 (age == a.age); } }; void to_json(json\u0026 j, const Person\u0026 p) { j = {{\"name\", p.name}, {\"age\", p.age}}; } void from_json(const json\u0026 j, Person\u0026 p) { j.at(\"name\").get_to(p.name); j.at(\"age\").get_to(p.age); } int main() { // 自定义类与JSON类间的类型转换 Person p1 = {\"Alice\", 18}; json j_person = p1; std::cout \u003c\u003c j_person \u003c\u003c std::endl; // {\"age\":18,\"name\":\"Alice\"} auto p2 = j_person.get\u003cPerson\u003e(); assert(p1 == p2); // true } 可以看到,该库提供了很好的扩展性和非侵入性,自定义的类无需继承自某个特殊的基类,在类内也不需要书写与 json 相关的代码.仅仅通过在自定义类的命名空间下实现to_json/from_json函数即可实现类型转换.这实现了自定义类逻辑和序列化逻辑的低耦合. 要讨论这个强大的功能的具体实现方式，就不得不提到参数依赖查找（ADL）。\n参数依赖查找（ADL） ADL（Argument Dependent Lookup）是一种 C++ 的特殊机制。\n在正常的函数调用中，编译器只会在当前作用域、包含当前作用域的外部作用域以及全局作用域中查找函数名。\n但当编译器遇到一个不带命名空间限定符的函数调用时，编译器会检查与函数有关的所有参数的类型（包括模板参数），并额外在这些类型所属的关联命名空间中查找与函数名匹配的函数。\n回到该库的实现，在to_json_fn中调用的to_json函数正是无限定的，因此会触发ADL。编译器会自动在自定义类所处的命名空间中查找参数匹配的to_json函数，从而实现自定义类与 JSON 类间的转换。\n因此，想实现自定义类型与 JSON 类型的相互转换的重点是在自定义类型的同个命名空间下进行to_json/from_json函数重载。这引出了一个问题，假如无法修改自定义类的命名空间（如第三方库或C++标准库中的类），怎么实现自定义类与JSON类的类型转换呢？\n自定义类型的类型转换（2） 该库提供了另一种重载to_json/from_json函数的方法：adl_serializer的特化。 我们可以在nlohmann命名空间下直接对序列化器实现对应类型的特化版本，举个例子：\nc++ Copy 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 #include #include #include #include #include\"json.hpp\" using json = nlohmann::json; namespace nlohmann { template\u003cclass T\u003e struct adl_serializer\u003cstd::shared_ptr\u003cT\u003e\u003e { static void to_json(json\u0026 j, const std::shared_ptr\u003cT\u003e\u0026 ptr) { if(ptr) { j = *ptr; } else { j = nullptr; } } static void from_json(const json\u0026 j, std::shared_ptr\u003cT\u003e\u0026 ptr) { if(j.is_null()) { ptr = nullptr; } else { ptr.reset(new T(j.get\u003cT\u003e())); } } }; } int main() { // 第三方库（以C++标准库为例）中的类与JSON类间的类型转换 std::shared_ptr\u003cPerson\u003e ptr1(\u0026p1); json j_ptr = ptr1; std::cout \u003c\u003c j_ptr \u003c\u003c std::endl; auto ptr2 = j_ptr.get\u003cstd::shared_ptr\u003cPerson\u003e\u003e(); // 只是以shared_ptr为例，该例并未实现两个指针指向同一个对象 assert((*ptr1) == (*ptr2)); } 通过这种方法，我们依旧可以在不污染原命名空间的前提下实现第三方库的类型与 JSON 类的转换。 原理很简单，在构造函数中尝试调用序列化器的to_json函数时，编译器会优先匹配特化版本的序列化器。事实上，如果编译器检查未特化版本的序列化器，会发现找不到匹配类型的to_json函数（因为 ADL 查找仅在关联命名空间中进行），从而导致实例化失败，但根据 SFINAE 原则，这不会导致编译错误，仅仅是不会实例化这个模板而已。\n精妙设计 为什么adl_serializer::to_json要调用nlohmann::to_json而不是直接调用无限定的to_json呢？\nc++ Copy 1 2 3 4 5 6 7 8 template\u003ctypename BasicJsonType, typename TargetType = ValueType\u003e static auto to_json(BasicJsonType\u0026 j, TargetType \u0026\u0026 val) noexcept( noexcept(::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)))) -\u003e decltype(::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)), void()) { ::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)); // 这里为什么不替换成 to_json(j, std::forward(val)) ? } 如果直接调用无限定的to_json，假如用户没有为自定义类实现to_json函数，那么在 ADL 的过程中，编译器找到的最佳匹配就会是adl_serializer中的to_json函数本身，从而导致死循环！ 而通过调用nlohmann::to_json这个接口可以完美规避这个问题，经过这个接口，函数实际调用的是位于nlohmann::detail下的to_json_fn函数对象，此时再触发ADL，编译器便不会在nlohmann命名空间下进行查找，而是在detail命名空间下（默认类型的to_json重载实现的地方）和其他关联命名空间下进行查找。假如用户没有实现to_json函数，会产生一个清晰的编译期错误，而不是一个难以调试的运行时栈溢出。\n为什么adl_serializer::to_json要调用nlohmann::to_json而不是直接调用nlohmann::detail::to_json_fn？\nc++ Copy 1 2 3 4 5 6 7 8 template\u003ctypename BasicJsonType, typename TargetType = ValueType\u003e static auto to_json(BasicJsonType\u0026 j, TargetType \u0026\u0026 val) noexcept( noexcept(::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)))) -\u003e decltype(::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)), void()) { ::nlohmann::to_json(j, std::forward\u003cTargetType\u003e(val)); // 这里为什么不替换成 nlohmann::detail::to_json_fn(j, std::forward(val)) ? } 这种间接调用的设计主要是为了统一接口和类型安全。detail命名空间是内部实现，不保证API的稳定性，如果采用直接调用的设计，假如在未来版本中进行了对detail内部的重构，那么就会直接破坏adl_serializer的实现。相反，在间接调用的设计下，仅需更改公共的API接口即可保证库中其他代码功能正常运行。这大大提高了代码的可维护性。\n补充 宏指令 在macro_scope.hpp中有这样一段代码：\nc++ Copy 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 // Macros to simplify conversion from/to types // 部分...是真正的省略号，并不是语法的一部分，详细代码参见源码 #define NLOHMANN_JSON_EXPAND( x ) x #define NLOHMANN_JSON_GET_MACRO(_1, _2, ..., _63, _64, NAME,...) NAME #define NLOHMANN_JSON_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, \\ NLOHMANN_JSON_PASTE64, \\ NLOHMANN_JSON_PASTE63, \\ ... NLOHMANN_JSON_PASTE2, \\ NLOHMANN_JSON_PASTE1)(__VA_ARGS__)) #define NLOHMANN_JSON_PASTE2(func, v1) func(v1) #define NLOHMANN_JSON_PASTE3(func, v1, v2) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE2(func, v2) // ... #define NLOHMANN_JSON_PASTE64(func, v1, ..., v63) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE63(func, v2, ..., v63) #define NLOHMANN_JSON_TO(v1) nlohmann_json_j[#v1] = nlohmann_json_t.v1; #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...) \\ template","wordCount":"1073","inLanguage":"en","datePublished":"2025-06-25T20:59:13+08:00","dateModified":"2025-06-25T20:59:13+08:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://evan704.github.io/posts/nlohmann-json-auto-type-conversion/"},"publisher":{"@type":"Organization","name":"Evan's blog","logo":{"@type":"ImageObject","url":"https://evan704.github.io/favicon.ico"}}}</script></head><body id=top><script>localStorage.getItem("pref-theme")==="dark"?document.body.classList.add("dark"):localStorage.getItem("pref-theme")==="light"?document.body.classList.remove("dark"):window.matchMedia("(prefers-color-scheme: dark)").matches&&document.body.classList.add("dark")</script><header class=header><nav class=nav><div class=logo><a href=https://evan704.github.io/ accesskey=h title="Evan's blog (Alt + H)">Evan's blog</a><div class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)" aria-label="Toggle theme">
+<svg id="moon" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+<svg id="sun" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></div></div><ul id=menu><li><a href=https://evan704.github.io/archives/ title=归档><span>归档</span></a></li><li><a href=https://evan704.github.io/search/ title="搜索 (Alt + /)" accesskey=/><span>搜索</span></a></li><li><a href=https://evan704.github.io/tags/ title=标签><span>标签</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><div class=breadcrumbs><a href=https://evan704.github.io/>Home</a>&nbsp;»&nbsp;<a href=https://evan704.github.io/posts/>Posts</a></div><h1 class="post-title entry-hint-parent">[Nlohmann json源码阅读] 自动类型转换&参数依赖查找(ADL)</h1><div class=post-meta><span title='2025-06-25 20:59:13 +0800 +0800'>June 25, 2025</span></div></header><div class=toc><details open><summary accesskey=c title="(Alt + C)"><span class=details>Table of Contents</span></summary><div class=inner><ul><li><a href=#%e8%87%aa%e5%8a%a8%e7%b1%bb%e5%9e%8b%e8%bd%ac%e6%8d%a2%e7%a4%ba%e4%be%8b aria-label=自动类型转换示例>自动类型转换示例</a></li><li><a href=#%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86 aria-label=工作原理>工作原理</a><ul><li><a href=#basic_json-%e7%9a%84%e6%9e%84%e9%80%a0%e5%87%bd%e6%95%b0 aria-label="basic_json 的构造函数">basic_json 的构造函数</a></li><li><a href=#adl_serializer%e7%9a%84to_json%e5%87%bd%e6%95%b0 aria-label=adl_serializer的to_json函数>adl_serializer的to_json函数</a></li><li><a href=#to_jsonhpp%e4%b8%ad%e7%9a%84to_json_fn aria-label=to_json.hpp中的to_json_fn>to_json.hpp中的to_json_fn</a></li><li><a href=#to_jsonhpp%e4%b8%ad%e5%a4%9a%e4%b8%aa%e9%87%8d%e8%bd%bd%e7%9a%84to_json%e5%87%bd%e6%95%b0 aria-label=to_json.hpp中多个重载的to_json函数>to_json.hpp中多个重载的to_json函数</a></li></ul></li><li><a href=#%e8%87%aa%e5%ae%9a%e4%b9%89%e7%b1%bb%e5%9e%8b%e7%9a%84%e7%b1%bb%e5%9e%8b%e8%bd%ac%e6%8d%a21 aria-label=自定义类型的类型转换（1）>自定义类型的类型转换（1）</a></li><li><a href=#%e5%8f%82%e6%95%b0%e4%be%9d%e8%b5%96%e6%9f%a5%e6%89%beadl aria-label=参数依赖查找（ADL）>参数依赖查找（ADL）</a></li><li><a href=#%e8%87%aa%e5%ae%9a%e4%b9%89%e7%b1%bb%e5%9e%8b%e7%9a%84%e7%b1%bb%e5%9e%8b%e8%bd%ac%e6%8d%a22 aria-label=自定义类型的类型转换（2）>自定义类型的类型转换（2）</a></li><li><a href=#%e7%b2%be%e5%a6%99%e8%ae%be%e8%ae%a1 aria-label=精妙设计>精妙设计</a></li><li><a href=#%e8%a1%a5%e5%85%85 aria-label=补充>补充</a><ul><li><a href=#%e5%ae%8f%e6%8c%87%e4%bb%a4 aria-label=宏指令>宏指令</a></li></ul></li><li><a href=#%e6%80%bb%e7%bb%93%e5%88%86%e6%9e%90 aria-label=总结分析>总结分析</a></li></ul></div></details></div><div class=post-content><h2 id=自动类型转换示例>自动类型转换示例<a hidden class=anchor aria-hidden=true href=#自动类型转换示例>#</a></h2><p><strong>Nlohmann json</strong>库实现了非常强大的自动类型转换功能，举个例子：</p><div class="custom-code-container highlight" id=code-block-8b4f1e2d1371><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#include&lt;iostream&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;string&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&#34;json.hpp&#34;
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=k>using</span> <span class=n>json</span> <span class=o>=</span> <span class=n>nlohmann</span><span class=o>::</span><span class=n>json</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 无需手动指定类型即可实现C++类型向JSON类的转换
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=n>json</span> <span class=n>j_int</span> <span class=o>=</span> <span class=mi>42</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>json</span> <span class=n>j_float</span> <span class=o>=</span> <span class=mf>3.14</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>json</span> <span class=n>j_string</span> <span class=o>=</span> <span class=s>&#34;OOP&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 内置对STL容器转换的支持
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span> <span class=n>vec</span> <span class=o>=</span> <span class=p>{</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>,</span> <span class=mi>4</span><span class=p>};</span>
+</span></span><span class=line><span class=cl>    <span class=n>json</span> <span class=n>j_vec</span> <span class=o>=</span> <span class=n>vec</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// JSON类向C++类的转换
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>auto</span> <span class=n>i</span> <span class=o>=</span> <span class=n>j_int</span><span class=p>.</span><span class=n>get</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;</span><span class=p>();</span> <span class=c1>// 42
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>auto</span> <span class=n>f</span> <span class=o>=</span> <span class=n>j_float</span><span class=p>.</span><span class=n>get</span><span class=o>&lt;</span><span class=kt>float</span><span class=o>&gt;</span><span class=p>();</span> <span class=c1>// 3.14
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>auto</span> <span class=n>s</span> <span class=o>=</span> <span class=n>j_string</span><span class=p>.</span><span class=n>get</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;</span><span class=p>();</span> <span class=c1>// OOP
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>auto</span> <span class=n>v</span> <span class=o>=</span> <span class=n>j_vec</span><span class=p>.</span><span class=n>get</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>vector</span><span class=o>&lt;</span><span class=kt>int</span><span class=o>&gt;&gt;</span><span class=p>();</span> <span class=c1>// [1, 2, 3, 4]
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><h2 id=工作原理>工作原理<a hidden class=anchor aria-hidden=true href=#工作原理>#</a></h2><p>这个自动转换系统是如何实现的呢？以从 C++ 类型向 JSON 类型转换为例，它主要涉及四个部分：<code>basic_json</code>的构造函数、<code>adl_serializer</code>的<code>to_json</code>函数、<code>to_json.hpp</code>中的<code>to_json_fn</code>（一个函数对象）、<code>to_json.hpp</code>中多个重载的<code>to_json</code>函数（或用户重载的<code>to_json</code>函数）。</p><p>接下来我们将跟踪定义<code>json j = some_object</code>后的行为。</p><h3 id=basic_json-的构造函数><code>basic_json</code> 的构造函数<a hidden class=anchor aria-hidden=true href=#basic_json-的构造函数>#</a></h3><p>定义<code>json j = some_object</code>后，首先会进入<code>basic_json</code>类的构造函数。</p><div class="custom-code-container highlight" id=code-block-496b5a9ff50d><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=k>template</span> <span class=o>&lt;</span> <span class=k>typename</span> <span class=n>CompatibleType</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>            <span class=k>typename</span> <span class=n>U</span> <span class=o>=</span> <span class=n>detail</span><span class=o>::</span><span class=n>uncvref_t</span><span class=o>&lt;</span><span class=n>CompatibleType</span><span class=o>&gt;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>            <span class=n>detail</span><span class=o>::</span><span class=n>enable_if_t</span> <span class=o>&lt;</span>
+</span></span><span class=line><span class=cl>                <span class=o>!</span><span class=n>detail</span><span class=o>::</span><span class=n>is_basic_json</span><span class=o>&lt;</span><span class=n>U</span><span class=o>&gt;::</span><span class=n>value</span> <span class=o>&amp;&amp;</span> <span class=n>detail</span><span class=o>::</span><span class=n>is_compatible_type</span><span class=o>&lt;</span><span class=n>basic_json_t</span><span class=p>,</span> <span class=n>U</span><span class=o>&gt;::</span><span class=n>value</span><span class=p>,</span> <span class=kt>int</span> <span class=o>&gt;</span> <span class=o>=</span> <span class=mi>0</span> <span class=o>&gt;</span>
+</span></span><span class=line><span class=cl><span class=n>basic_json</span><span class=p>(</span><span class=n>CompatibleType</span> <span class=o>&amp;&amp;</span> <span class=n>val</span><span class=p>)</span> <span class=k>noexcept</span><span class=p>(</span><span class=k>noexcept</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>        <span class=n>JSONSerializer</span><span class=o>&lt;</span><span class=n>U</span><span class=o>&gt;::</span><span class=n>to_json</span><span class=p>(</span><span class=n>std</span><span class=o>::</span><span class=n>declval</span><span class=o>&lt;</span><span class=n>basic_json_t</span><span class=o>&amp;&gt;</span><span class=p>(),</span>
+</span></span><span class=line><span class=cl>                                    <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>CompatibleType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>))))</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>JSONSerializer</span><span class=o>&lt;</span><span class=n>U</span><span class=o>&gt;::</span><span class=n>to_json</span><span class=p>(</span><span class=o>*</span><span class=k>this</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>CompatibleType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=n>set_parents</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=n>assert_invariant</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>对于可兼容类型，这个模板函数会被实例化，从而调用序列化器<code>JSONSerializer&lt;U></code>（默认为<code>adl_serializer&lt;U></code>）的<code>to_json</code>函数。</p><p>什么是可兼容类型?简单来讲就是序列化器(特化或未特化的)含有相应类型的<code>to_json</code>函数.这个判断是通过type traits (类型萃取)的方式进行判断的,我们将在另一篇文章中讨论.</p><h3 id=adl_serializer的to_json函数><code>adl_serializer</code>的<code>to_json</code>函数<a hidden class=anchor aria-hidden=true href=#adl_serializer的to_json函数>#</a></h3><div class="custom-code-container highlight" id=code-block-5463bd5a15ba><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=k>template</span><span class=o>&lt;</span><span class=k>typename</span> <span class=n>BasicJsonType</span><span class=p>,</span> <span class=k>typename</span> <span class=n>TargetType</span> <span class=o>=</span> <span class=n>ValueType</span><span class=o>&gt;</span>
+</span></span><span class=line><span class=cl><span class=k>static</span> <span class=k>auto</span> <span class=n>to_json</span><span class=p>(</span><span class=n>BasicJsonType</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=n>TargetType</span> <span class=o>&amp;&amp;</span> <span class=n>val</span><span class=p>)</span> <span class=k>noexcept</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=k>noexcept</span><span class=p>(</span><span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>))))</span>
+</span></span><span class=line><span class=cl><span class=o>-&gt;</span> <span class=k>decltype</span><span class=p>(</span><span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>)),</span> <span class=kt>void</span><span class=p>())</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>));</span>
+</span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>以TargetType为模板参数,这个函数调用<code>nlohmann</code>命名空间下的<code>to_json</code>函数对象.</p><h3 id=to_jsonhpp中的to_json_fn><code>to_json.hpp</code>中的<code>to_json_fn</code><a hidden class=anchor aria-hidden=true href=#to_jsonhpp中的to_json_fn>#</a></h3><p><code>to_json</code>又是怎么调用到<code>to_json_fn</code>这个函数对象的呢?在<code>to_json.hpp</code>中(<code>nlohmann</code>命名空间下),有这样一段代码:</p><div class="custom-code-container highlight" id=code-block-c395e30b5bba><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=n>JSON_INLINE_VARIABLE</span> <span class=k>constexpr</span> <span class=k>const</span> <span class=k>auto</span><span class=o>&amp;</span> <span class=n>to_json</span> <span class=o>=</span>
+</span></span><span class=line><span class=cl>    <span class=n>detail</span><span class=o>::</span><span class=n>static_const</span><span class=o>&lt;</span><span class=n>detail</span><span class=o>::</span><span class=n>to_json_fn</span><span class=o>&gt;::</span><span class=n>value</span><span class=p>;</span></span></span></code></pre></td></tr></table></div></div></div></div><p>这段代码的作用是将<code>nlohmann</code>命名空间下的<code>to_json</code>定义为一个函数对象<code>to_json_fn</code>(<code>detail</code>命名空间下),后续会解释为什么需要采用间接的方式来调用这个函数对象.</p><div class="custom-code-container highlight" id=code-block-1306f80a2f1a><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=k>struct</span> <span class=nc>to_json_fn</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>template</span><span class=o>&lt;</span><span class=k>typename</span> <span class=n>BasicJsonType</span><span class=p>,</span> <span class=k>typename</span> <span class=n>T</span><span class=o>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=k>auto</span> <span class=k>operator</span><span class=p>()(</span><span class=n>BasicJsonType</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=n>T</span><span class=o>&amp;&amp;</span> <span class=n>val</span><span class=p>)</span> <span class=k>const</span> <span class=k>noexcept</span><span class=p>(</span><span class=k>noexcept</span><span class=p>(</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>T</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>))))</span>
+</span></span><span class=line><span class=cl>    <span class=o>-&gt;</span> <span class=k>decltype</span><span class=p>(</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>T</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>)),</span> <span class=kt>void</span><span class=p>())</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=nf>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>T</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>};</span></span></span></code></pre></td></tr></table></div></div></div></div><p>这个函数对象调用的是一个<strong>无限定</strong>(非常重要!)的<code>to_json</code>函数.</p><h3 id=to_jsonhpp中多个重载的to_json函数><code>to_json.hpp</code>中多个重载的<code>to_json</code>函数<a hidden class=anchor aria-hidden=true href=#to_jsonhpp中多个重载的to_json函数>#</a></h3><div class="custom-code-container highlight" id=code-block-2187d66f4d72><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=k>template</span><span class=o>&lt;</span><span class=k>typename</span> <span class=n>BasicJsonType</span><span class=o>&gt;</span>
+</span></span><span class=line><span class=cl><span class=kr>inline</span> <span class=kt>void</span> <span class=n>to_json</span><span class=p>(</span><span class=n>BasicJsonType</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=k>typename</span> <span class=n>BasicJsonType</span><span class=o>::</span><span class=n>string_t</span><span class=o>&amp;&amp;</span> <span class=n>s</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>external_constructor</span><span class=o>&lt;</span><span class=n>value_t</span><span class=o>::</span><span class=n>string</span><span class=o>&gt;::</span><span class=n>construct</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>move</span><span class=p>(</span><span class=n>s</span><span class=p>));</span>
+</span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>此处的<code>external_constructor</code>是一个模板类,用于安全地管理 union 的创建和修改.</p><h2 id=自定义类型的类型转换1>自定义类型的类型转换（1）<a hidden class=anchor aria-hidden=true href=#自定义类型的类型转换1>#</a></h2><p>为什么调用过程看似如此复杂?这涉及到该库精妙的结构设计.在讨论它之前,先让我们看看怎么使用该库实现自定义类型的类型转换.</p><div class="custom-code-container highlight" id=code-block-c17766236ebe><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#include&lt;iostream&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;string&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;assert.h&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;memory.h&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&#34;json.hpp&#34;
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=k>using</span> <span class=n>json</span> <span class=o>=</span> <span class=n>nlohmann</span><span class=o>::</span><span class=n>json</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>struct</span> <span class=nc>Person</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>std</span><span class=o>::</span><span class=n>string</span> <span class=n>name</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>age</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kt>bool</span> <span class=k>operator</span><span class=o>==</span> <span class=p>(</span><span class=k>const</span> <span class=n>Person</span><span class=o>&amp;</span> <span class=n>a</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=p>(</span><span class=n>name</span> <span class=o>==</span> <span class=n>a</span><span class=p>.</span><span class=n>name</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=p>(</span><span class=n>age</span> <span class=o>==</span> <span class=n>a</span><span class=p>.</span><span class=n>age</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>to_json</span><span class=p>(</span><span class=n>json</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=k>const</span> <span class=n>Person</span><span class=o>&amp;</span> <span class=n>p</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>j</span> <span class=o>=</span> <span class=p>{{</span><span class=s>&#34;name&#34;</span><span class=p>,</span> <span class=n>p</span><span class=p>.</span><span class=n>name</span><span class=p>},</span> <span class=p>{</span><span class=s>&#34;age&#34;</span><span class=p>,</span> <span class=n>p</span><span class=p>.</span><span class=n>age</span><span class=p>}};</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>from_json</span><span class=p>(</span><span class=k>const</span> <span class=n>json</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=n>Person</span><span class=o>&amp;</span> <span class=n>p</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>j</span><span class=p>.</span><span class=n>at</span><span class=p>(</span><span class=s>&#34;name&#34;</span><span class=p>).</span><span class=n>get_to</span><span class=p>(</span><span class=n>p</span><span class=p>.</span><span class=n>name</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=n>j</span><span class=p>.</span><span class=n>at</span><span class=p>(</span><span class=s>&#34;age&#34;</span><span class=p>).</span><span class=n>get_to</span><span class=p>(</span><span class=n>p</span><span class=p>.</span><span class=n>age</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 自定义类与JSON类间的类型转换
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=n>Person</span> <span class=n>p1</span> <span class=o>=</span> <span class=p>{</span><span class=s>&#34;Alice&#34;</span><span class=p>,</span> <span class=mi>18</span><span class=p>};</span>
+</span></span><span class=line><span class=cl>    <span class=n>json</span> <span class=n>j_person</span> <span class=o>=</span> <span class=n>p1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>std</span><span class=o>::</span><span class=n>cout</span> <span class=o>&lt;&lt;</span> <span class=n>j_person</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// {&#34;age&#34;:18,&#34;name&#34;:&#34;Alice&#34;}
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>auto</span> <span class=n>p2</span> <span class=o>=</span> <span class=n>j_person</span><span class=p>.</span><span class=n>get</span><span class=o>&lt;</span><span class=n>Person</span><span class=o>&gt;</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=n>assert</span><span class=p>(</span><span class=n>p1</span> <span class=o>==</span> <span class=n>p2</span><span class=p>);</span> <span class=c1>// true
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>可以看到,该库提供了很好的扩展性和非侵入性,自定义的类无需继承自某个特殊的基类,在类内也不需要书写与 json 相关的代码.仅仅通过在自定义类的命名空间下实现<code>to_json/from_json</code>函数即可实现类型转换.这实现了自定义类逻辑和序列化逻辑的低耦合.
+要讨论这个强大的功能的具体实现方式，就不得不提到<strong>参数依赖查找（ADL）</strong>。</p><h2 id=参数依赖查找adl>参数依赖查找（ADL）<a hidden class=anchor aria-hidden=true href=#参数依赖查找adl>#</a></h2><p><a href=https://en.cppreference.com/w/cpp/language/adl.html><strong>ADL（Argument Dependent Lookup）</strong></a>是一种 C++ 的特殊机制。</p><p>在正常的函数调用中，编译器只会在<strong>当前作用域、包含当前作用域的外部作用域以及全局作用域</strong>中查找函数名。</p><p>但当编译器遇到一个<strong>不带命名空间限定符</strong>的函数调用时，编译器会检查<strong>与函数有关的所有参数的类型（包括模板参数）</strong>，并<strong>额外</strong>在这些类型所属的<strong>关联命名空间</strong>中查找与函数名匹配的函数。</p><p>回到该库的实现，在<code>to_json_fn</code>中调用的<code>to_json</code>函数正是无限定的，因此会触发ADL。编译器会自动在自定义类所处的命名空间中查找参数匹配的<code>to_json</code>函数，从而实现自定义类与 JSON 类间的转换。</p><p>因此，想实现自定义类型与 JSON 类型的相互转换的重点是在自定义类型的同个命名空间下进行<code>to_json/from_json</code>函数重载。这引出了一个问题，假如无法修改自定义类的命名空间（如第三方库或C++标准库中的类），怎么实现自定义类与JSON类的类型转换呢？</p><h2 id=自定义类型的类型转换2>自定义类型的类型转换（2）<a hidden class=anchor aria-hidden=true href=#自定义类型的类型转换2>#</a></h2><p>该库提供了另一种重载<code>to_json/from_json</code>函数的方法：adl_serializer的特化。
+我们可以在nlohmann命名空间下直接对序列化器实现对应类型的特化版本，举个例子：</p><div class="custom-code-container highlight" id=code-block-17ce78a56207><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#include&lt;iostream&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;string&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;assert.h&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;memory.h&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&#34;json.hpp&#34;
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=k>using</span> <span class=n>json</span> <span class=o>=</span> <span class=n>nlohmann</span><span class=o>::</span><span class=n>json</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>namespace</span> <span class=n>nlohmann</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>template</span><span class=o>&lt;</span><span class=k>class</span> <span class=nc>T</span><span class=o>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=k>struct</span> <span class=nc>adl_serializer</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>shared_ptr</span><span class=o>&lt;</span><span class=n>T</span><span class=o>&gt;&gt;</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>static</span> <span class=kt>void</span> <span class=nf>to_json</span><span class=p>(</span><span class=n>json</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=k>const</span> <span class=n>std</span><span class=o>::</span><span class=n>shared_ptr</span><span class=o>&lt;</span><span class=n>T</span><span class=o>&gt;&amp;</span> <span class=n>ptr</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span><span class=p>(</span><span class=n>ptr</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=n>j</span> <span class=o>=</span> <span class=o>*</span><span class=n>ptr</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>            <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=n>j</span> <span class=o>=</span> <span class=k>nullptr</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=k>static</span> <span class=kt>void</span> <span class=nf>from_json</span><span class=p>(</span><span class=k>const</span> <span class=n>json</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>shared_ptr</span><span class=o>&lt;</span><span class=n>T</span><span class=o>&gt;&amp;</span> <span class=n>ptr</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span><span class=p>(</span><span class=n>j</span><span class=p>.</span><span class=n>is_null</span><span class=p>())</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=n>ptr</span> <span class=o>=</span> <span class=k>nullptr</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>            <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=n>ptr</span><span class=p>.</span><span class=n>reset</span><span class=p>(</span><span class=k>new</span> <span class=n>T</span><span class=p>(</span><span class=n>j</span><span class=p>.</span><span class=n>get</span><span class=o>&lt;</span><span class=n>T</span><span class=o>&gt;</span><span class=p>()));</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>};</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 第三方库（以C++标准库为例）中的类与JSON类间的类型转换
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=n>std</span><span class=o>::</span><span class=n>shared_ptr</span><span class=o>&lt;</span><span class=n>Person</span><span class=o>&gt;</span> <span class=n>ptr1</span><span class=p>(</span><span class=o>&amp;</span><span class=n>p1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=n>json</span> <span class=n>j_ptr</span> <span class=o>=</span> <span class=n>ptr1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>std</span><span class=o>::</span><span class=n>cout</span> <span class=o>&lt;&lt;</span> <span class=n>j_ptr</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>auto</span> <span class=n>ptr2</span> <span class=o>=</span> <span class=n>j_ptr</span><span class=p>.</span><span class=n>get</span><span class=o>&lt;</span><span class=n>std</span><span class=o>::</span><span class=n>shared_ptr</span><span class=o>&lt;</span><span class=n>Person</span><span class=o>&gt;&gt;</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 只是以shared_ptr为例，该例并未实现两个指针指向同一个对象
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=n>assert</span><span class=p>((</span><span class=o>*</span><span class=n>ptr1</span><span class=p>)</span> <span class=o>==</span> <span class=p>(</span><span class=o>*</span><span class=n>ptr2</span><span class=p>));</span>
+</span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>通过这种方法，我们依旧可以在不污染原命名空间的前提下实现第三方库的类型与 JSON 类的转换。
+原理很简单，在构造函数中尝试调用序列化器的<code>to_json</code>函数时，编译器会优先匹配特化版本的序列化器。事实上，如果编译器检查未特化版本的序列化器，会发现找不到匹配类型的<code>to_json</code>函数（因为 ADL 查找仅在关联命名空间中进行），从而导致实例化失败，但根据 SFINAE 原则，这不会导致编译错误，仅仅是不会实例化这个模板而已。</p><h2 id=精妙设计>精妙设计<a hidden class=anchor aria-hidden=true href=#精妙设计>#</a></h2><p>为什么<code>adl_serializer::to_json</code>要调用<code>nlohmann::to_json</code>而不是直接调用无限定的<code>to_json</code>呢？</p><div class="custom-code-container highlight" id=code-block-106db632e2c3><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=k>template</span><span class=o>&lt;</span><span class=k>typename</span> <span class=n>BasicJsonType</span><span class=p>,</span> <span class=k>typename</span> <span class=n>TargetType</span> <span class=o>=</span> <span class=n>ValueType</span><span class=o>&gt;</span>
+</span></span><span class=line><span class=cl><span class=k>static</span> <span class=k>auto</span> <span class=n>to_json</span><span class=p>(</span><span class=n>BasicJsonType</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=n>TargetType</span> <span class=o>&amp;&amp;</span> <span class=n>val</span><span class=p>)</span> <span class=k>noexcept</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=k>noexcept</span><span class=p>(</span><span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>))))</span>
+</span></span><span class=line><span class=cl><span class=o>-&gt;</span> <span class=k>decltype</span><span class=p>(</span><span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>)),</span> <span class=kt>void</span><span class=p>())</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 这里为什么不替换成 to_json(j, std::forward&lt;TargetType&gt;(val)) ?
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>如果直接调用无限定的<code>to_json</code>，假如用户没有为自定义类实现<code>to_json</code>函数，那么在 ADL 的过程中，编译器找到的最佳匹配就会是<code>adl_serializer</code>中的<code>to_json</code>函数本身，从而导致<strong>死循环</strong>！
+而通过调用<code>nlohmann::to_json</code>这个接口可以完美规避这个问题，经过这个接口，函数实际调用的是位于<code>nlohmann::detail</code>下的<code>to_json_fn</code>函数对象，此时再触发ADL，编译器便不会在<code>nlohmann</code>命名空间下进行查找，而是在<code>detail</code>命名空间下（默认类型的<code>to_json</code>重载实现的地方）和其他关联命名空间下进行查找。假如用户没有实现to_json函数，会产生一个清晰的<strong>编译期错误</strong>，而不是一个难以调试的<strong>运行时栈溢出</strong>。</p><p>为什么<code>adl_serializer::to_json</code>要调用<code>nlohmann::to_json</code>而不是直接调用<code>nlohmann::detail::to_json_fn</code>？</p><div class="custom-code-container highlight" id=code-block-f79295c1cdac><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=k>template</span><span class=o>&lt;</span><span class=k>typename</span> <span class=n>BasicJsonType</span><span class=p>,</span> <span class=k>typename</span> <span class=n>TargetType</span> <span class=o>=</span> <span class=n>ValueType</span><span class=o>&gt;</span>
+</span></span><span class=line><span class=cl><span class=k>static</span> <span class=k>auto</span> <span class=n>to_json</span><span class=p>(</span><span class=n>BasicJsonType</span><span class=o>&amp;</span> <span class=n>j</span><span class=p>,</span> <span class=n>TargetType</span> <span class=o>&amp;&amp;</span> <span class=n>val</span><span class=p>)</span> <span class=k>noexcept</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=k>noexcept</span><span class=p>(</span><span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>))))</span>
+</span></span><span class=line><span class=cl><span class=o>-&gt;</span> <span class=k>decltype</span><span class=p>(</span><span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>)),</span> <span class=kt>void</span><span class=p>())</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=o>::</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>to_json</span><span class=p>(</span><span class=n>j</span><span class=p>,</span> <span class=n>std</span><span class=o>::</span><span class=n>forward</span><span class=o>&lt;</span><span class=n>TargetType</span><span class=o>&gt;</span><span class=p>(</span><span class=n>val</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 这里为什么不替换成 nlohmann::detail::to_json_fn(j, std::forward&lt;TargetType&gt;(val)) ?
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>这种<strong>间接调用</strong>的设计主要是为了<strong>统一接口</strong>和<strong>类型安全</strong>。detail命名空间是<strong>内部实现</strong>，不保证API的稳定性，如果采用直接调用的设计，假如在未来版本中进行了对detail内部的重构，那么就会直接破坏adl_serializer的实现。相反，在<strong>间接调用</strong>的设计下，仅需更改公共的API接口即可保证库中其他代码功能正常运行。这大大提高了代码的<strong>可维护性</strong>。</p><h2 id=补充>补充<a hidden class=anchor aria-hidden=true href=#补充>#</a></h2><h3 id=宏指令>宏指令<a hidden class=anchor aria-hidden=true href=#宏指令>#</a></h3><p>在<code>macro_scope.hpp</code>中有这样一段代码：</p><div class="custom-code-container highlight" id=code-block-8d2fe15d9dda><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=c1>// Macros to simplify conversion from/to types
+</span></span></span><span class=line><span class=cl><span class=c1>// 部分...是真正的省略号，并不是语法的一部分，详细代码参见源码
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=cp>#define NLOHMANN_JSON_EXPAND( x ) x
+</span></span></span><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_GET_MACRO(_1, _2, ..., _63, _64, NAME,...) NAME
+</span></span></span><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, \
+</span></span></span><span class=line><span class=cl><span class=cp>        NLOHMANN_JSON_PASTE64, \
+</span></span></span><span class=line><span class=cl><span class=cp>        NLOHMANN_JSON_PASTE63, \
+</span></span></span><span class=line><span class=cl><span class=cp>        ...
+</span></span></span><span class=line><span class=cl><span class=cp></span>        <span class=n>NLOHMANN_JSON_PASTE2</span><span class=p>,</span> \
+</span></span><span class=line><span class=cl>        <span class=n>NLOHMANN_JSON_PASTE1</span><span class=p>)(</span><span class=n>__VA_ARGS__</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_PASTE2(func, v1) func(v1)
+</span></span></span><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_PASTE3(func, v1, v2) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE2(func, v2)
+</span></span></span><span class=line><span class=cl><span class=cp></span><span class=c1>// ...
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=cp>#define NLOHMANN_JSON_PASTE64(func, v1, ..., v63) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE63(func, v2, ..., v63)
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_TO(v1) nlohmann_json_j[#v1] = nlohmann_json_t.v1;
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
+</span></span></span><span class=line><span class=cl><span class=cp>    template&lt;typename BasicJsonType, nlohmann::detail::enable_if_t&lt;nlohmann::detail::is_basic_json&lt;BasicJsonType&gt;::value, int&gt; = 0&gt; \
+</span></span></span><span class=line><span class=cl><span class=cp>    void to_json(BasicJsonType&amp; nlohmann_json_j, const Type&amp; nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
+</span></span></span><span class=line><span class=cl><span class=cp>    template&lt;typename BasicJsonType, nlohmann::detail::enable_if_t&lt;nlohmann::detail::is_basic_json&lt;BasicJsonType&gt;::value, int&gt; = 0&gt; \
+</span></span></span><span class=line><span class=cl><span class=cp>    void from_json(const BasicJsonType&amp; nlohmann_json_j, Type&amp; nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }</span></span></span></code></pre></td></tr></table></div></div></div></div><p>这段代码的作用十分强大，可以自动实现自定义类的<code>to_json/from_json</code>函数，举个例子：</p><div class="custom-code-container highlight" id=code-block-6f563bb2cd34><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#include&lt;iostream&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;string&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;assert.h&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&lt;memory.h&gt;
+</span></span></span><span class=line><span class=cl><span class=cp>#include&#34;json.hpp&#34;
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=k>using</span> <span class=n>json</span> <span class=o>=</span> <span class=n>nlohmann</span><span class=o>::</span><span class=n>json</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>struct</span> <span class=nc>Person</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>std</span><span class=o>::</span><span class=n>string</span> <span class=n>name</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>age</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kt>bool</span> <span class=k>operator</span><span class=o>==</span> <span class=p>(</span><span class=k>const</span> <span class=n>Person</span><span class=o>&amp;</span> <span class=n>a</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=p>(</span><span class=n>name</span> <span class=o>==</span> <span class=n>a</span><span class=p>.</span><span class=n>name</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=p>(</span><span class=n>age</span> <span class=o>==</span> <span class=n>a</span><span class=p>.</span><span class=n>age</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// void to_json(json&amp; j, const Person&amp; p) {
+</span></span></span><span class=line><span class=cl><span class=c1>//     j = {{&#34;name&#34;, p.name}, {&#34;age&#34;, p.age}};
+</span></span></span><span class=line><span class=cl><span class=c1>// }
+</span></span></span><span class=line><span class=cl><span class=c1>// void from_json(const json&amp; j, Person&amp; p) {
+</span></span></span><span class=line><span class=cl><span class=c1>//     j.at(&#34;name&#34;).get_to(p.name);
+</span></span></span><span class=line><span class=cl><span class=c1>//     j.at(&#34;age&#34;).get_to(p.age);
+</span></span></span><span class=line><span class=cl><span class=c1>// }
+</span></span></span><span class=line><span class=cl><span class=c1>// 以上两个函数与以下一条宏指令等价
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=n>NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE</span><span class=p>(</span><span class=n>Person</span><span class=p>,</span> <span class=n>name</span><span class=p>,</span> <span class=n>age</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=n>main</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 自定义类与JSON类间的类型转换
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=n>Person</span> <span class=n>p1</span> <span class=o>=</span> <span class=p>{</span><span class=s>&#34;Alice&#34;</span><span class=p>,</span> <span class=mi>18</span><span class=p>};</span>
+</span></span><span class=line><span class=cl>    <span class=n>json</span> <span class=n>j_person</span> <span class=o>=</span> <span class=n>p1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>std</span><span class=o>::</span><span class=n>cout</span> <span class=o>&lt;&lt;</span> <span class=n>j_person</span> <span class=o>&lt;&lt;</span> <span class=n>std</span><span class=o>::</span><span class=n>endl</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// {&#34;age&#34;:18,&#34;name&#34;:&#34;Alice&#34;}
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>auto</span> <span class=n>p2</span> <span class=o>=</span> <span class=n>j_person</span><span class=p>.</span><span class=n>get</span><span class=o>&lt;</span><span class=n>Person</span><span class=o>&gt;</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=n>assert</span><span class=p>(</span><span class=n>p1</span> <span class=o>==</span> <span class=n>p2</span><span class=p>);</span> <span class=c1>// true
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>可以发现，原本的写法非常机械，而使用这条宏指令减少了许多编写代码的时间！那么，它的原理是什么呢？还是以<code>to_json</code>函数为例。</p><div class="custom-code-container highlight" id=code-block-b0445c14b6f8><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
+</span></span></span><span class=line><span class=cl><span class=cp>    template&lt;typename BasicJsonType, nlohmann::detail::enable_if_t&lt;nlohmann::detail::is_basic_json&lt;BasicJsonType&gt;::value, int&gt; = 0&gt; \
+</span></span></span><span class=line><span class=cl><span class=cp>    void to_json(BasicJsonType&amp; nlohmann_json_j, const Type&amp; nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } 
+</span></span></span><span class=line><span class=cl><span class=cp></span><span class=c1>// NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Person, name, age) (to_json函数部分)被替换为
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>template</span><span class=o>&lt;</span><span class=k>typename</span> <span class=n>BasicJsonType</span><span class=p>,</span> <span class=n>nlohmann</span><span class=o>::</span><span class=n>detail</span><span class=o>::</span><span class=n>enable_if_t</span><span class=o>&lt;</span><span class=n>nlohmann</span><span class=o>::</span><span class=n>detail</span><span class=o>::</span><span class=n>is_basic_json</span><span class=o>&lt;</span><span class=n>BasicJsonType</span><span class=o>&gt;::</span><span class=n>value</span><span class=p>,</span> <span class=kt>int</span><span class=o>&gt;</span> <span class=o>=</span> <span class=mi>0</span><span class=o>&gt;</span>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=n>to_json</span><span class=p>(</span><span class=n>BasicJsonType</span><span class=o>&amp;</span> <span class=n>nlohmann_json_j</span><span class=p>,</span> <span class=k>const</span> <span class=n>Person</span><span class=o>&amp;</span> <span class=n>nlohmann_json_t</span><span class=p>)</span> <span class=p>{</span> 
+</span></span><span class=line><span class=cl>    <span class=n>NLOHMANN_JSON_EXPAND</span><span class=p>(</span><span class=n>NLOHMANN_JSON_PASTE</span><span class=p>(</span><span class=n>NLOHMANN_JSON_TO</span><span class=p>,</span> <span class=n>name</span><span class=p>,</span> <span class=n>age</span><span class=p>))</span> <span class=c1>// 此处NLOHMANN_JSON_PASTE中的__VA_ARGS__被替换为name, age
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div></div><p>首先，这条宏指令定义了一个这样的模板函数。它的参数正是我们需要的。接下来需要实现的就是展开对这个类的每个成员变量赋值，这需要用到两个重要的辅助宏：<code>NLOHMANN_JSON_PASTE</code>和<code>NLOHMANN_JSON_GET_MACRO</code>。</p><p>先来看<code>NLOHMANN_JSON_GET_PASTE</code>，它的作用是模拟遍历__VA_ARGS__中的每个参数：</p><div class="custom-code-container highlight" id=code-block-9a46619aaf45><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, \
+</span></span></span><span class=line><span class=cl><span class=cp>        NLOHMANN_JSON_PASTE64, \
+</span></span></span><span class=line><span class=cl><span class=cp>        NLOHMANN_JSON_PASTE63, \
+</span></span></span><span class=line><span class=cl><span class=cp>        ...
+</span></span></span><span class=line><span class=cl><span class=cp></span>        <span class=n>NLOHMANN_JSON_PASTE2</span><span class=p>,</span> \
+</span></span><span class=line><span class=cl>        <span class=n>NLOHMANN_JSON_PASTE1</span><span class=p>)(</span><span class=n>__VA_ARGS__</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=c1>// NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, name, age) 被替换为
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=n>NLOHMANN_JSON_EXPAND</span><span class=p>(</span><span class=n>NLOHMANN_JSON_GET_MACRO</span><span class=p>(</span><span class=n>NLOHMANN_JSON_TO</span><span class=p>,</span> <span class=n>name</span><span class=p>,</span> <span class=n>age</span><span class=p>,</span> 
+</span></span><span class=line><span class=cl>        <span class=n>NLOHMANN_JSON_PASTE64</span><span class=p>,</span> 
+</span></span><span class=line><span class=cl>        <span class=n>NLOHMANN_JSON_PASTE63</span><span class=p>,</span> 
+</span></span><span class=line><span class=cl>        <span class=p>...</span>
+</span></span><span class=line><span class=cl>        <span class=n>NLOHMANN_JSON_PASTE2</span><span class=p>,</span> 
+</span></span><span class=line><span class=cl>        <span class=n>NLOHMANN_JSON_PASTE1</span><span class=p>)(</span><span class=n>NLOHMANN_JSON_TO</span><span class=p>,</span> <span class=n>name</span><span class=p>,</span> <span class=n>age</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=c1>// 此处的NLOHMANN_JSON_PASTE&lt;N&gt;是处理N个参数的宏
+</span></span></span></code></pre></td></tr></table></div></div></div></div><p><code>NLOHMANN_JSON_GET_MACRO</code>实现了巧妙的参数计数：</p><div class="custom-code-container highlight" id=code-block-7a16c3236150><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_GET_MACRO(_1, _2, ..., _63, _64, NAME,...) NAME</span></span></span></code></pre></td></tr></table></div></div></div></div><p>在<code>NLOHMANN_JSON_PASTE</code>的调用中，先传入了<code>NLOHMANN_JSON_TO, name, age</code>三个参数，再传入了从NLOHMANN_JSON_PASTE64至NLOHMANN_JSON_PASTE1共64个参数，因此总共传入了67个参数。而NAME被定义为第65个参数，在本例中，它就是NLOHMANN_JSON_PASTE3，刚好就是处理3个参数的宏！</p><p>并且我们不难发现，这种写法可以对于不同的参数数量自动调用不同的宏，是一个非常经典而有效的宏技巧。</p><p>在<code>NLOHMANN_JSON_PASTE&lt;N></code>中会递归调用<code>NLOHMANN_JSON_PASTE&lt;N-1></code>和<code>NLOHMANN_JSON_PASTE2</code>，而<code>NLOHMANN_JSON_PASTE2</code>被定义为：</p><div class="custom-code-container highlight" id=code-block-0642872858fc><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_PASTE2(func, v1) func(v1)</span></span></span></code></pre></td></tr></table></div></div></div></div><p>因此，最终<code>NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, name, age)</code>被替换为：</p><div class="custom-code-container highlight" id=code-block-d91ba0b4af66><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=n>NLOHMANN_JSON_TO</span><span class=p>(</span><span class=n>name</span><span class=p>)</span> <span class=n>NLOHMANN_JSON_TO</span><span class=p>(</span><span class=n>age</span><span class=p>)</span></span></span></code></pre></td></tr></table></div></div></div></div><p>最后：</p><div class="custom-code-container highlight" id=code-block-b976e2d10a31><div class=custom-code-header><div class=custom-code-lang>c++</div><button class=custom-code-copy-btn aria-label=复制代码 data-copied-text=Copied!>
+<span>Copy</span></button></div><div class=highlight-code><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c++ data-lang=c++><span class=line><span class=cl><span class=cp>#define NLOHMANN_JSON_TO(v1) nlohmann_json_j[#v1] = nlohmann_json_t.v1;
+</span></span></span><span class=line><span class=cl><span class=cp></span><span class=c1>// #v1的作用是将v1转化为一个字面量
+</span></span></span><span class=line><span class=cl><span class=c1>// NLOHMANN_JSON_TO(name) NLOHMANN_JSON_TO(age) 被替换为
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=n>nlohmann_json_j</span><span class=p>[</span><span class=s>&#34;name&#34;</span><span class=p>]</span> <span class=o>=</span> <span class=n>nlohmann_json_t</span><span class=p>.</span><span class=n>name</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=n>nlohmann_json_j</span><span class=p>[</span><span class=s>&#34;age&#34;</span><span class=p>]</span> <span class=o>=</span> <span class=n>nlohmann_json_t</span><span class=p>.</span><span class=n>age</span><span class=p>;</span></span></span></code></pre></td></tr></table></div></div></div></div><p>完美实现<code>to_json</code>函数功能。</p><p>该库还实现了多个类似的宏指令，可以帮助实现包括侵入和非侵入的多种自定义类的<code>to_json/from_json</code>函数，非常便捷，具体可查看源代码的<code>README.md</code>。</p><h2 id=总结分析>总结分析<a hidden class=anchor aria-hidden=true href=#总结分析>#</a></h2><p>该库的代码实现有许多优越性：</p><ul><li><strong>符合开闭原则</strong>：Nlohmann Json库的核心代码对外“关闭”，但对新类型的支持“开放”，可以通过添加 to_json/from_json 函数来进行拓展。</li><li><strong>非侵入式设计</strong>：不需要使自定义类继承自某个基类，也不需要在自定义类内添加与 JSON 有关的代码，实现了自定义类逻辑和序列化逻辑的低耦合。</li><li><strong>使用便捷</strong>：该库提供了便捷的扩展方式，还有宏指令等简化代码编写过程的处理，极大降低了使用难度。</li><li><strong>模块间低耦合</strong>：各个模块分工明确，耦合性低，便于理解和维护。</li></ul></div><footer class=post-footer><ul class=post-tags><li><a href=https://evan704.github.io/tags/nlohmann-json/>Nlohmann Json</a></li><li><a href=https://evan704.github.io/tags/c++/>C++</a></li><li><a href=https://evan704.github.io/tags/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/>源码阅读</a></li><li><a href=https://evan704.github.io/tags/%E5%8F%82%E6%95%B0%E4%BE%9D%E8%B5%96%E6%9F%A5%E6%89%BEadl/>参数依赖查找ADL</a></li></ul><nav class=paginav><a class=next href=https://evan704.github.io/posts/nlohmann-json-basic-usage-and-code-architecture/><span class=title>Next »</span><br><span>[Nlohmann json源码阅读] 基础使用方法与代码框架分析</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2025 <a href=https://evan704.github.io/>Evan's blog</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+<a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg viewBox="0 0 12 6" fill="currentColor"><path d="M12 6H0l6-6z"/></svg>
+</a><script src=/js/copy.js defer></script><script>let menu=document.getElementById("menu");menu&&(menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}),document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove("dark"),localStorage.setItem("pref-theme","light")):(document.body.classList.add("dark"),localStorage.setItem("pref-theme","dark"))})</script></body></html>
