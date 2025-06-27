@@ -1,53 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Posts on Evan's blog</title><link>https://evan704.github.io/posts/</link><description>Recent content in Posts on Evan's blog</description><generator>Hugo -- 0.147.9</generator><language>zh-cn</language><lastBuildDate>Fri, 27 Jun 2025 11:44:33 +0800</lastBuildDate><atom:link href="https://evan704.github.io/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>[高性能计算] CUDA Toolkit 的安装与环境配置</title><link>https://evan704.github.io/posts/hpc-cuda-toolkit-installation-and-environment-configuration/</link><pubDate>Fri, 27 Jun 2025 11:44:33 +0800</pubDate><guid>https://evan704.github.io/posts/hpc-cuda-toolkit-installation-and-environment-configuration/</guid><description>&lt;h2 id="安装与环境配置">安装与环境配置&lt;/h2>
-&lt;p>首先需要安装显卡驱动，在 Windows 系统下，直接下载 GeForce Experience 后即可在应用中下载最新的驱动。&lt;/p>
-&lt;p>接下来需要安装 CUDA Toolkit 。在 Powershell 中输入&lt;code>nvidia-smi&lt;/code>，得到的输出结果中右上角显示的是你的硬件能支持的最高CUDA版本。&lt;/p>
-&lt;p>在 CUDA Toolkit Archive 中选择你需要的 CUDA 版本，然后跟随提示选择后点击下载即可。&lt;/p>
-&lt;p>下载后运行 .exe 程序，跟随提示安装即可。&lt;/p>
-&lt;p>接下来需要安装 CUDA Toolkit &lt;strong>兼容&lt;/strong>的 Visual Studio 版本。&lt;/p>
-&lt;p>安装完成后可以在命令行中输入&lt;code>nvcc --version&lt;/code>验证安装。&lt;/p>
-&lt;p>需要注意的是，在用 nvcc 对&lt;code>.cu&lt;/code>文件进行编译时，需要在 Developer Command for VS 20xx 下进行，而不能直接在终端中编译。如果想在 VS Code 中配置 Developer Command for VS 20xx 终端，可以打开settings.json文件（&lt;code>Ctrl+Shift+P&lt;/code>后输入&lt;code>Open User Settings (JSON)&lt;/code>选择第一项），在大括号内末尾添加：&lt;/p>
-&lt;div class="custom-code-container highlight" id="code-block-f01722ef777e">
-&lt;div class="custom-code-header">
-&lt;div class="custom-code-lang">json&lt;/div>
-&lt;button class="custom-code-copy-btn"
-aria-label="复制代码"
-data-copied-text="Copied!">
-&lt;span>Copy&lt;/span>
-&lt;/button>
-&lt;/div>
-&lt;div class="highlight-code">
-&lt;div class="highlight">&lt;div class="chroma">
-&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
-&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
-&lt;/span>&lt;span class="lnt"> 2
-&lt;/span>&lt;span class="lnt"> 3
-&lt;/span>&lt;span class="lnt"> 4
-&lt;/span>&lt;span class="lnt"> 5
-&lt;/span>&lt;span class="lnt"> 6
-&lt;/span>&lt;span class="lnt"> 7
-&lt;/span>&lt;span class="lnt"> 8
-&lt;/span>&lt;span class="lnt"> 9
-&lt;/span>&lt;span class="lnt">10
-&lt;/span>&lt;span class="lnt">11
-&lt;/span>&lt;span class="lnt">12
-&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
-&lt;td class="lntd">
-&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl">&lt;span class="s2">&amp;#34;terminal.integrated.profiles.windows&amp;#34;&lt;/span>&lt;span class="err">:&lt;/span> &lt;span class="p">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Developer PowerShell for VS 20xx (x64)&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;path&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;args&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;-noexit&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;-command&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;&amp;amp;{ Import-Module -Name &amp;#39;E:\\Microsoft Visual Studio\\2019\\Community\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll&amp;#39;; Enter-VsDevShell -VsInstallPath &amp;#39;E:\\Microsoft Visual Studio\\2019\\Community&amp;#39; -SkipAutomaticLocation -DevCmdArguments &amp;#39;-arch=amd64&amp;#39; }&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// 替换为你的VS安装位置的相应目录
-&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="p">],&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;icon&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;terminal-powershell&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
-&lt;/div>
-&lt;/div>
-&lt;/div>
-&lt;/div>&lt;p>此时可以在VS Code 的终端栏中点击加号，下拉栏中就会出现&lt;code>Developer PowerShell for VS 20xx (x64)&lt;/code>，打开这个终端就可以直接在其中进行编译。&lt;/p></description></item><item><title>[高性能计算] MPI编程</title><link>https://evan704.github.io/posts/hpc-mpi-programming/</link><pubDate>Thu, 26 Jun 2025 16:11:21 +0800</pubDate><guid>https://evan704.github.io/posts/hpc-mpi-programming/</guid><description>&lt;h2 id="环境配置">环境配置&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>MPI on Evan's blog</title><link>https://evan704.github.io/tags/mpi/</link><description>Recent content in MPI on Evan's blog</description><generator>Hugo -- 0.147.9</generator><language>zh-cn</language><lastBuildDate>Thu, 26 Jun 2025 16:11:21 +0800</lastBuildDate><atom:link href="https://evan704.github.io/tags/mpi/index.xml" rel="self" type="application/rss+xml"/><item><title>[高性能计算] MPI编程</title><link>https://evan704.github.io/posts/hpc-mpi-programming/</link><pubDate>Thu, 26 Jun 2025 16:11:21 +0800</pubDate><guid>https://evan704.github.io/posts/hpc-mpi-programming/</guid><description>&lt;h2 id="环境配置">环境配置&lt;/h2>
 &lt;p>在 Windows 系统下，可以选择安装 Microsoft MPI 。&lt;/p>
 &lt;h2 id="编译与运行">编译与运行&lt;/h2>
 &lt;p>编译&lt;/p>
@@ -236,4 +187,4 @@ data-copied-text="Copied!">
 &lt;/div>
 &lt;/div>
 &lt;/div>
-&lt;/div>&lt;p>此处效率的提高没达到理论估计是因为在不同进程间传输信息也需要时间，而这个任务的计算量太小以至于通信操作显得昂贵。&lt;/p></description></item><item><title>[Nlohmann json 源码阅读] 自动类型转换&amp;参数依赖查找(ADL)</title><link>https://evan704.github.io/posts/nlohmann-json-auto-type-conversion/</link><pubDate>Wed, 25 Jun 2025 20:59:13 +0800</pubDate><guid>https://evan704.github.io/posts/nlohmann-json-auto-type-conversion/</guid><description>分析了Nlohmann json库强大的自动类型转换系统的工作原理，介绍了参数依赖查找机制</description></item><item><title>[Nlohmann json 源码阅读] 基础使用方法与代码框架分析</title><link>https://evan704.github.io/posts/nlohmann-json-basic-usage-and-code-architecture/</link><pubDate>Wed, 25 Jun 2025 20:21:18 +0800</pubDate><guid>https://evan704.github.io/posts/nlohmann-json-basic-usage-and-code-architecture/</guid><description>介绍了Nlohmann json库的基本用法并分析了其代码设计框架</description></item><item><title>Markdown基本语法</title><link>https://evan704.github.io/posts/markdown-basic-grammar/</link><pubDate>Wed, 25 Jun 2025 09:47:11 +0800</pubDate><guid>https://evan704.github.io/posts/markdown-basic-grammar/</guid><description>A self reminder.</description></item><item><title>如何利用Hugo搭建一个自己的博客</title><link>https://evan704.github.io/posts/how-to-use-hugo-to-build-a-blog/</link><pubDate>Tue, 24 Jun 2025 11:03:50 +0800</pubDate><guid>https://evan704.github.io/posts/how-to-use-hugo-to-build-a-blog/</guid><description>有手就行！</description></item></channel></rss>
+&lt;/div>&lt;p>此处效率的提高没达到理论估计是因为在不同进程间传输信息也需要时间，而这个任务的计算量太小以至于通信操作显得昂贵。&lt;/p></description></item></channel></rss>

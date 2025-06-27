@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>[高性能计算] CUDA 编程基础 | Evan&#39;s blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="核心概念
+
+主机（Host）：你的 CPU 。
+设备（Device）：你的 GPU 。
+主机代码（Host Code）：标准的 C&#43;&#43; 代码，在 CPU 上运行，负责处理整体逻辑，并指挥 GPU 工作。
+设备代码（Device Code）：在 GPU 上执行的并行代码，被称为核函数（Kernel）。
+
+线程层次结构：Grid、Block、Thread
+
+线程（Thread）：执行核函数的最小单位。
+线程块（Block）：由多个线程组成。
+网格（Grid）：由多个线程块组成。
+
+基本语法
+声明核函数
+要将一个函数声明为核函数，需要使用__global__声明说明符。
+
+__global__ 函数必须返回 void 类型。
+__global__ 函数由主机调用，由设备执行。
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+    
+    
+      c&#43;&#43;
+    
+
+    
+    
+      Copy
+    
+
+  
+
+  
+  
+    
+
+1
+2
+3
+4
+
+
+// 这是一个核函数定义
+__global__ void myFirstKernel() {
+    // 在 GPU 上执行的代码
+}
+
+
+  
+
+启动核函数
+从主机调用核函数也需要一种特殊的语法：&lt;&lt;&lt;GridDim, BlockDim&gt;&gt;&gt;，其中，GridDim 和 BlockDim 分别声明了启动的网格维度和线程块维度，它们可以是一维、二维或三维的 dim3 变量。
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+    
+    
+      c&#43;&#43;
+    
+
+    
+    
+      Copy
+    
+
+  
+
+  
+  
+    
+
+1
+2
+3
+4
+5
+6
+7
+8
+
+
+// 这是一个主机函数 (例如 main)
+int main() {
+    // ...
+    // 启动核函数
+    myFirstKernel&lt;&lt;&lt;1, 1&gt;&gt;&gt;();
+    // ...
+    return 0;
+}
+
+
+  
+
+总线程数= Grid 中 Block 的数量 Block 中 Thread 的数量*">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E9%AB%98%E6%80%A7%E8%83%BD%E8%AE%A1%E7%AE%97_cuda%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80/">
+<meta name="google-site-verification" content="einQoik8Jc69jO4Z7q6ltdiWgaJkeVfOOjYYzNlWg7E">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.6b440e33cadb6d978cca3c09460d5ab82e38e933f7c06903d0a8988bd598e69b.css" integrity="sha256-a0QOM8rbbZeMyjwJRg1auC446TP3wGkD0KiYi9WY5ps=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/%E9%AB%98%E6%80%A7%E8%83%BD%E8%AE%A1%E7%AE%97_cuda%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, 
+    {
+        delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+        ]
+    });"></script>
+
+
+  <link rel="stylesheet" href="/css/syntax.css">
+
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Evan&#39;s blog (Alt + H)">Evan&#39;s blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="http://localhost:1313/">Home</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">Posts</a></div>
+    <h1 class="post-title entry-hint-parent">
+      [高性能计算] CUDA 编程基础
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h1>
+    <div class="post-meta"><span title='2025-06-27 20:17:48 +0800 CST'>June 27, 2025</span>
+
+</div>
+  </header> <div class="toc">
+    <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e6%a0%b8%e5%bf%83%e6%a6%82%e5%bf%b5" aria-label="核心概念">核心概念</a></li>
+                <li>
+                    <a href="#%e7%ba%bf%e7%a8%8b%e5%b1%82%e6%ac%a1%e7%bb%93%e6%9e%84gridblockthread" aria-label="线程层次结构：Grid、Block、Thread">线程层次结构：Grid、Block、Thread</a></li>
+                <li>
+                    <a href="#%e5%9f%ba%e6%9c%ac%e8%af%ad%e6%b3%95" aria-label="基本语法">基本语法</a><ul>
+                        
+                <li>
+                    <a href="#%e5%a3%b0%e6%98%8e%e6%a0%b8%e5%87%bd%e6%95%b0" aria-label="声明核函数">声明核函数</a></li>
+                <li>
+                    <a href="#%e5%90%af%e5%8a%a8%e6%a0%b8%e5%87%bd%e6%95%b0" aria-label="启动核函数">启动核函数</a></li>
+                <li>
+                    <a href="#%e5%86%85%e7%bd%ae%e5%8f%98%e9%87%8f" aria-label="内置变量">内置变量</a></li>
+                <li>
+                    <a href="#%e5%86%85%e5%ad%98%e7%ae%a1%e7%90%86" aria-label="内存管理">内存管理</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e4%be%8b%e5%ad%90%e7%9f%a9%e9%98%b5%e4%b9%98%e6%b3%95" aria-label="例子：矩阵乘法">例子：矩阵乘法</a></li>
+                <li>
+                    <a href="#%e8%bf%9b%e9%98%b6%e8%af%ad%e6%b3%95" aria-label="进阶语法">进阶语法</a><ul>
+                        
+                <li>
+                    <a href="#%e7%ba%bf%e7%a8%8b%e5%90%8c%e6%ad%a5" aria-label="线程同步">线程同步</a></li>
+                <li>
+                    <a href="#%e5%85%b1%e4%ba%ab%e5%86%85%e5%ad%98" aria-label="共享内存">共享内存</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><h2 id="核心概念">核心概念<a hidden class="anchor" aria-hidden="true" href="#核心概念">#</a></h2>
+<ul>
+<li>主机（Host）：你的 CPU 。</li>
+<li>设备（Device）：你的 GPU 。</li>
+<li>主机代码（Host Code）：标准的 C++ 代码，在 CPU 上运行，负责处理整体逻辑，并指挥 GPU 工作。</li>
+<li>设备代码（Device Code）：在 GPU 上执行的并行代码，被称为<strong>核函数（Kernel）</strong>。</li>
+</ul>
+<h2 id="线程层次结构gridblockthread">线程层次结构：Grid、Block、Thread<a hidden class="anchor" aria-hidden="true" href="#线程层次结构gridblockthread">#</a></h2>
+<ul>
+<li>线程（Thread）：执行核函数的最小单位。</li>
+<li>线程块（Block）：由多个线程组成。</li>
+<li>网格（Grid）：由多个线程块组成。</li>
+</ul>
+<h2 id="基本语法">基本语法<a hidden class="anchor" aria-hidden="true" href="#基本语法">#</a></h2>
+<h3 id="声明核函数">声明核函数<a hidden class="anchor" aria-hidden="true" href="#声明核函数">#</a></h3>
+<p>要将一个函数声明为核函数，需要使用<code>__global__</code>声明说明符。</p>
+<ul>
+<li><code>__global__</code> 函数必须返回 <code>void</code> 类型。</li>
+<li><code>__global__</code> 函数由主机调用，由设备执行。</li>
+</ul>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-41d6ac77acce">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">c&#43;&#43;</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 这是一个核函数定义
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">myFirstKernel</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 在 GPU 上执行的代码
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><h3 id="启动核函数">启动核函数<a hidden class="anchor" aria-hidden="true" href="#启动核函数">#</a></h3>
+<p>从主机调用核函数也需要一种特殊的语法：<code>&lt;&lt;&lt;GridDim, BlockDim&gt;&gt;&gt;</code>，其中，GridDim 和 BlockDim 分别声明了启动的<strong>网格维度</strong>和<strong>线程块维度</strong>，它们可以是一维、二维或三维的 <code>dim3</code> 变量。</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-70eea9467a6a">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">c&#43;&#43;</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// 这是一个主机函数 (例如 main)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 启动核函数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">myFirstKernel</span><span class="o">&lt;&lt;&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;&gt;&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p><em><em>总线程数= Grid 中 Block 的数量</em> Block 中 Thread 的数量</em>*</p>
+<p>例如：<code>kernel&lt;&lt;&lt;10, 256&gt;&gt;&gt;()</code></p>
+<p>这会启动一个包含 10 个 Block 的 Grid。</p>
+<p>每个 Block 包含 256 个 Thread。</p>
+<p>总共会启动 10*256=2560 个 Thread。</p>
+<h3 id="内置变量">内置变量<a hidden class="anchor" aria-hidden="true" href="#内置变量">#</a></h3>
+<p>在核函数内部，每个线程可以通过内置变量来得知自己的**“编号”**。</p>
+<ul>
+<li><code>threadIdx</code>：一个<code>uint3</code>类型变量，包含线程在所在块的索引（<code>.x</code>,<code>.y</code>和<code>.z</code>）。</li>
+<li><code>blockIdx</code>：类似 <code>threadIdx</code>。</li>
+<li><code>blockDim</code>：一个 dim3类型变量，包含每个块的维度（<code>.x</code>,<code>.y</code>和<code>.z</code>）。</li>
+<li><code>gridDim</code>：类似<code>blockDim</code>。</li>
+</ul>
+<h3 id="内存管理">内存管理<a hidden class="anchor" aria-hidden="true" href="#内存管理">#</a></h3>
+<p>主机和设备拥有独立的物理内存，因此我们需要手动管理两者间的数据传输。</p>
+<ul>
+<li><code>cudaMalloc(void** devPtr, size_t size)</code>：在<strong>设备</strong>上分配一块内存。</li>
+<li><code>cudaMemcpy(void* dst, const void* src, size_t count, cudaMemcpyKind kind)</code>：在<strong>主机和设备间</strong>拷贝数据。
+<ul>
+<li><code>kind</code>参数：
+<ul>
+<li>
+<p><code>cudaMemcpyHostToDevice</code>: 从<strong>主机</strong>拷贝到<strong>设备</strong>。</p>
+</li>
+<li>
+<p><code>cudaMemcpyDeviceToHost</code>: 从<strong>设备</strong>拷贝到<strong>主机</strong>。</p>
+</li>
+<li>
+<p><code>cudaMemcpyDeviceToDevice</code>: 在<strong>设备内部</strong>拷贝数据。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>cudaFree(void* devPtr)</code>：释放<strong>设备上</strong>分配的内存。</li>
+</ul>
+<h2 id="例子矩阵乘法">例子：矩阵乘法<a hidden class="anchor" aria-hidden="true" href="#例子矩阵乘法">#</a></h2>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-3771a024c16a">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">c&#43;&#43;</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="cp">#include&lt;iostream&gt;
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include&lt;vector&gt;
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include&lt;cstdlib&gt;
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include&lt;cuda_runtime.h&gt;
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include&lt;assert.h&gt;
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#define CUDA_CHECK(err) { \
+</span></span></span><span class="line"><span class="cl"><span class="cp">    if (err != cudaSuccess) { \
+</span></span></span><span class="line"><span class="cl"><span class="cp">        std::cerr &lt;&lt; &#34;CUDA Error: &#34; &lt;&lt; cudaGetErrorString(err) &lt;&lt; &#34; in &#34; &lt;&lt; __FILE__ &lt;&lt; &#34; at line &#34; &lt;&lt; __LINE__ &lt;&lt; std::endl; \
+</span></span></span><span class="line"><span class="cl"><span class="cp">        exit(EXIT_FAILURE); \
+</span></span></span><span class="line"><span class="cl"><span class="cp">    } \
+</span></span></span><span class="line"><span class="cl"><span class="cp">}
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">naiveGEMM</span><span class="p">(</span><span class="kt">float</span> <span class="o">*</span><span class="n">d_A</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">d_B</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">d_C</span><span class="p">,</span> <span class="kt">int</span> <span class="n">M</span><span class="p">,</span> <span class="kt">int</span> <span class="n">N</span><span class="p">,</span> <span class="kt">int</span> <span class="n">K</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">row</span> <span class="o">=</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span><span class="o">*</span><span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="o">+</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">col</span> <span class="o">=</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="o">*</span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="o">+</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">(</span><span class="n">row</span> <span class="o">&lt;</span> <span class="n">M</span> <span class="o">&amp;&amp;</span> <span class="n">col</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">float</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">K</span><span class="p">;</span> <span class="n">k</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sum</span> <span class="o">+=</span> <span class="n">d_A</span><span class="p">[</span><span class="n">row</span><span class="o">*</span><span class="n">K</span><span class="o">+</span><span class="n">k</span><span class="p">]</span><span class="o">*</span><span class="n">d_B</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="n">N</span><span class="o">+</span><span class="n">col</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">d_C</span><span class="p">[</span><span class="n">row</span><span class="o">*</span><span class="n">N</span><span class="o">+</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">M</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="mi">512</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">size_t</span> <span class="n">size_A</span> <span class="o">=</span> <span class="n">M</span><span class="o">*</span><span class="n">K</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span> <span class="n">size_B</span> <span class="o">=</span> <span class="n">K</span><span class="o">*</span><span class="n">N</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span> <span class="n">size_C</span> <span class="o">=</span> <span class="n">M</span><span class="o">*</span><span class="n">N</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="n">h_A</span><span class="p">(</span><span class="n">M</span><span class="o">*</span><span class="n">K</span><span class="p">),</span> <span class="n">h_B</span><span class="p">(</span><span class="n">K</span><span class="o">*</span><span class="n">N</span><span class="p">),</span> <span class="n">h_C_cpu</span><span class="p">(</span><span class="n">M</span><span class="o">*</span><span class="n">N</span><span class="p">),</span> <span class="n">h_C_gpu</span><span class="p">(</span><span class="n">M</span><span class="o">*</span><span class="n">N</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">M</span><span class="o">*</span><span class="n">K</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">h_A</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">rand</span><span class="p">())</span><span class="o">/</span><span class="n">RAND_MAX</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">K</span><span class="o">*</span><span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">h_B</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">rand</span><span class="p">())</span><span class="o">/</span><span class="n">RAND_MAX</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">float</span> <span class="o">*</span><span class="n">d_A</span><span class="p">,</span> <span class="o">*</span><span class="n">d_B</span><span class="p">,</span> <span class="o">*</span><span class="n">d_C</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_A</span><span class="p">,</span> <span class="n">size_A</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_B</span><span class="p">,</span> <span class="n">size_B</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d_C</span><span class="p">,</span> <span class="n">size_C</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_A</span><span class="p">,</span> <span class="n">h_A</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">size_A</span><span class="p">,</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">d_B</span><span class="p">,</span> <span class="n">h_B</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">size_B</span><span class="p">,</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="n">dim3</span> <span class="n">thredsPerBlock</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dim3</span> <span class="n">blocksPerGrid</span><span class="p">((</span><span class="n">N</span><span class="o">+</span><span class="n">thredsPerBlock</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">thredsPerBlock</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">M</span><span class="o">+</span><span class="n">thredsPerBlock</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">thredsPerBlock</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">naiveGEMM</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocksPerGrid</span><span class="p">,</span> <span class="n">thredsPerBlock</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">d_A</span><span class="p">,</span> <span class="n">d_B</span><span class="p">,</span> <span class="n">d_C</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">K</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaGetLastError</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="n">CUDA_CHECK</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">h_C_gpu</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">d_C</span><span class="p">,</span> <span class="n">size_C</span><span class="p">,</span> <span class="n">cudaMemcpyDeviceToHost</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Success!&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><h2 id="进阶语法">进阶语法<a hidden class="anchor" aria-hidden="true" href="#进阶语法">#</a></h2>
+<h3 id="线程同步">线程同步<a hidden class="anchor" aria-hidden="true" href="#线程同步">#</a></h3>
+<p><code>__syncthread()</code>十分重要，它被用于<strong>块内同步</strong>。当块内的所有进程执行到这条语句时，都会在此处暂停，直到块内的所有线程都执行到这个同步点。</p>
+<p>Hint；只会同步同一个块内的线程。</p>
+<p>这在线程协作的算法中至关重要。</p>
+<h3 id="共享内存">共享内存<a hidden class="anchor" aria-hidden="true" href="#共享内存">#</a></h3>
+<p>共享内存是位于 GPU 芯片上的一块高速缓存，其访问速度远快于全局内存。</p>
+<p>可以用<code>__shared__</code>关键字声明一个在共享内存上的变量，它被块内所有线程共享。不同的线程块有独立的共享内存。共享内存上变量的生命周期与线程块相同。</p>
+<p>通过使用共享内存，可以显著减少对慢速全局内存的访问次数，是 CUDA 优化的关键技巧之一。</p>
+
+
+
+
+
+
+
+
+<div class="custom-code-container highlight" id="code-block-bb3dbd6d419a">
+
+  
+  <div class="custom-code-header">
+    
+    
+    
+      <div class="custom-code-lang">c&#43;&#43;</div>
+    
+
+    
+    <button class="custom-code-copy-btn" 
+            aria-label="复制代码" 
+            data-copied-text="Copied!">
+      <span>Copy</span>
+    </button>
+
+  </div>
+
+  
+  <div class="highlight-code">
+    <div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">myKernel</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 声明一个包含 256 个浮点数的共享内存数组
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 这个数组对该块内的所有线程可见
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">__shared__</span> <span class="kt">float</span> <span class="n">shared_data</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+
+</div><p>常见使用模式：</p>
+<ol>
+<li>
+<p>将数据从全局内存分块加载到共享内存。</p>
+</li>
+<li>
+<p>同步线程 (__syncthreads())，确保所有数据都已加载完毕。</p>
+</li>
+<li>
+<p>在共享内存上进行大量计算。</p>
+</li>
+<li>
+<p>再次同步线程 (__syncthreads())，确保所有计算都已完成。</p>
+</li>
+<li>
+<p>将最终结果写回全局内存。</p>
+</li>
+</ol>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+<nav class="paginav">
+  <a class="next" href="http://localhost:1313/posts/hpc-cuda-toolkit-installation-and-environment-configuration/">
+    <span class="title">Next »</span>
+    <br>
+    <span>[高性能计算] CUDA Toolkit 的安装与环境配置</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="http://localhost:1313/">Evan&#39;s blog</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+
+<script src="/js/copy.js" defer></script>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
