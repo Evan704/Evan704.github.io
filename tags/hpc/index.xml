@@ -1,50 +1,88 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>HPC on Evan's blog</title><link>https://evan704.github.io/tags/hpc/</link><description>Recent content in HPC on Evan's blog</description><generator>Hugo -- 0.147.9</generator><language>zh-cn</language><lastBuildDate>Fri, 27 Jun 2025 11:44:33 +0800</lastBuildDate><atom:link href="https://evan704.github.io/tags/hpc/index.xml" rel="self" type="application/rss+xml"/><item><title>[高性能计算] CUDA Toolkit 的安装与环境配置</title><link>https://evan704.github.io/posts/hpc-cuda-toolkit-installation-and-environment-configuration/</link><pubDate>Fri, 27 Jun 2025 11:44:33 +0800</pubDate><guid>https://evan704.github.io/posts/hpc-cuda-toolkit-installation-and-environment-configuration/</guid><description>&lt;h2 id="安装与环境配置">安装与环境配置&lt;/h2>
-&lt;p>首先需要安装显卡驱动，在 Windows 系统下，直接下载 GeForce Experience 后即可在应用中下载最新的驱动。&lt;/p>
-&lt;p>接下来需要安装 CUDA Toolkit 。在 Powershell 中输入&lt;code>nvidia-smi&lt;/code>，得到的输出结果中右上角显示的是你的硬件能支持的最高CUDA版本。&lt;/p>
-&lt;p>在 CUDA Toolkit Archive 中选择你需要的 CUDA 版本，然后跟随提示选择后点击下载即可。&lt;/p>
-&lt;p>下载后运行 .exe 程序，跟随提示安装即可。&lt;/p>
-&lt;p>接下来需要安装 CUDA Toolkit &lt;strong>兼容&lt;/strong>的 Visual Studio 版本。&lt;/p>
-&lt;p>安装完成后可以在命令行中输入&lt;code>nvcc --version&lt;/code>验证安装。&lt;/p>
-&lt;p>需要注意的是，在用 nvcc 对&lt;code>.cu&lt;/code>文件进行编译时，需要在 Developer Command for VS 20xx 下进行，而不能直接在终端中编译。如果想在 VS Code 中配置 Developer Command for VS 20xx 终端，可以打开settings.json文件（&lt;code>Ctrl+Shift+P&lt;/code>后输入&lt;code>Open User Settings (JSON)&lt;/code>选择第一项），在大括号内末尾添加：&lt;/p>
-&lt;div class="custom-code-container highlight" id="code-block-f01722ef777e">
-&lt;div class="custom-code-header">
-&lt;div class="custom-code-lang">json&lt;/div>
-&lt;button class="custom-code-copy-btn"
-aria-label="复制代码"
-data-copied-text="Copied!">
-&lt;span>Copy&lt;/span>
-&lt;/button>
-&lt;/div>
-&lt;div class="highlight-code">
-&lt;div class="highlight">&lt;div class="chroma">
-&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
-&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
-&lt;/span>&lt;span class="lnt"> 2
-&lt;/span>&lt;span class="lnt"> 3
-&lt;/span>&lt;span class="lnt"> 4
-&lt;/span>&lt;span class="lnt"> 5
-&lt;/span>&lt;span class="lnt"> 6
-&lt;/span>&lt;span class="lnt"> 7
-&lt;/span>&lt;span class="lnt"> 8
-&lt;/span>&lt;span class="lnt"> 9
-&lt;/span>&lt;span class="lnt">10
-&lt;/span>&lt;span class="lnt">11
-&lt;/span>&lt;span class="lnt">12
-&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
-&lt;td class="lntd">
-&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl">&lt;span class="s2">&amp;#34;terminal.integrated.profiles.windows&amp;#34;&lt;/span>&lt;span class="err">:&lt;/span> &lt;span class="p">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Developer PowerShell for VS 20xx (x64)&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;path&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;args&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;-noexit&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;-command&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;&amp;amp;{ Import-Module -Name &amp;#39;E:\\Microsoft Visual Studio\\2019\\Community\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll&amp;#39;; Enter-VsDevShell -VsInstallPath &amp;#39;E:\\Microsoft Visual Studio\\2019\\Community&amp;#39; -SkipAutomaticLocation -DevCmdArguments &amp;#39;-arch=amd64&amp;#39; }&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// 替换为你的VS安装位置的相应目录
-&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="p">],&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;icon&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;terminal-powershell&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
-&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
-&lt;/div>
-&lt;/div>
-&lt;/div>
-&lt;/div>&lt;p>此时可以在VS Code 的终端栏中点击加号，下拉栏中就会出现&lt;code>Developer PowerShell for VS 20xx (x64)&lt;/code>，打开这个终端就可以直接在其中进行编译。&lt;/p></description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>HPC on Evan&#39;s blog</title>
+    <link>http://localhost:1313/tags/hpc/</link>
+    <description>Recent content in HPC on Evan&#39;s blog</description>
+    <generator>Hugo -- 0.147.9</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 27 Jun 2025 11:44:33 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/hpc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>高性能计算_CUDA_Toolkit的安装与环境配置</title>
+      <link>http://localhost:1313/posts/hpc-cuda-toolkit-installation-and-environment-configuration/</link>
+      <pubDate>Fri, 27 Jun 2025 11:44:33 +0800</pubDate>
+      <guid>http://localhost:1313/posts/hpc-cuda-toolkit-installation-and-environment-configuration/</guid>
+      <description>&lt;h2 id=&#34;安装与环境配置&#34;&gt;安装与环境配置&lt;/h2&gt;
+&lt;p&gt;首先需要安装显卡驱动，在 Windows 系统下，直接下载 GeForce Experience 后即可在应用中下载最新的驱动。&lt;/p&gt;
+&lt;p&gt;接下来需要安装 CUDA Toolkit 。在 Powershell 中输入&lt;code&gt;nvidia-smi&lt;/code&gt;，得到的输出结果中右上角显示的是你的硬件能支持的最高CUDA版本。&lt;/p&gt;
+&lt;p&gt;在 CUDA Toolkit Archive 中选择你需要的 CUDA 版本，然后跟随提示选择后点击下载即可。&lt;/p&gt;
+&lt;p&gt;下载后运行 .exe 程序，跟随提示安装即可。&lt;/p&gt;
+&lt;p&gt;接下来需要安装 CUDA Toolkit &lt;strong&gt;兼容&lt;/strong&gt;的 Visual Studio 版本。&lt;/p&gt;
+&lt;p&gt;安装完成后可以在命令行中输入&lt;code&gt;nvcc --version&lt;/code&gt;验证安装。&lt;/p&gt;
+&lt;p&gt;需要注意的是，在用 nvcc 对&lt;code&gt;.cu&lt;/code&gt;文件进行编译时，需要在 Developer Command for VS 20xx 下进行，而不能直接在终端中编译。如果想在 VS Code 中配置 Developer Command for VS 20xx 终端，可以打开settings.json文件（&lt;code&gt;Ctrl+Shift+P&lt;/code&gt;后输入&lt;code&gt;Open User Settings (JSON)&lt;/code&gt;选择第一项），在大括号内末尾添加：&lt;/p&gt;
+
+
+
+
+
+
+
+
+&lt;div class=&#34;custom-code-container highlight&#34; id=&#34;code-block-f01722ef777e&#34;&gt;
+
+  
+  &lt;div class=&#34;custom-code-header&#34;&gt;
+    
+    
+    
+      &lt;div class=&#34;custom-code-lang&#34;&gt;json&lt;/div&gt;
+    
+
+    
+    &lt;button class=&#34;custom-code-copy-btn&#34; 
+            aria-label=&#34;复制代码&#34; 
+            data-copied-text=&#34;Copied!&#34;&gt;
+      &lt;span&gt;Copy&lt;/span&gt;
+    &lt;/button&gt;
+
+  &lt;/div&gt;
+
+  
+  &lt;div class=&#34;highlight-code&#34;&gt;
+    &lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;s2&#34;&gt;&amp;#34;terminal.integrated.profiles.windows&amp;#34;&lt;/span&gt;&lt;span class=&#34;err&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;nt&#34;&gt;&amp;#34;Developer PowerShell for VS 20xx (x64)&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;        &lt;span class=&#34;nt&#34;&gt;&amp;#34;path&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;        &lt;span class=&#34;nt&#34;&gt;&amp;#34;args&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;            &lt;span class=&#34;s2&#34;&gt;&amp;#34;-noexit&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;            &lt;span class=&#34;s2&#34;&gt;&amp;#34;-command&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;            &lt;span class=&#34;s2&#34;&gt;&amp;#34;&amp;amp;{ Import-Module -Name &amp;#39;E:\\Microsoft Visual Studio\\2019\\Community\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll&amp;#39;; Enter-VsDevShell -VsInstallPath &amp;#39;E:\\Microsoft Visual Studio\\2019\\Community&amp;#39; -SkipAutomaticLocation -DevCmdArguments &amp;#39;-arch=amd64&amp;#39; }&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;            &lt;span class=&#34;c1&#34;&gt;// 替换为你的VS安装位置的相应目录
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;        &lt;span class=&#34;p&#34;&gt;],&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;        &lt;span class=&#34;nt&#34;&gt;&amp;#34;icon&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;terminal-powershell&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;&lt;p&gt;此时可以在VS Code 的终端栏中点击加号，下拉栏中就会出现&lt;code&gt;Developer PowerShell for VS 20xx (x64)&lt;/code&gt;，打开这个终端就可以直接在其中进行编译。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
